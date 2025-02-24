@@ -788,6 +788,7 @@ async def generate_chat_completion(
     if "max_tokens" in payload and "max_completion_tokens" in payload:
         del payload["max_tokens"]
 
+    payload.pop("stream", None)
     # Convert the modified body back to JSON
     if "logit_bias" in payload:
         payload["logit_bias"] = json.loads(
@@ -827,6 +828,7 @@ async def generate_chat_completion(
         headers["Authorization"] = f"Bearer {key}"
 
     payload = json.dumps(payload)
+    
 
     r = None
     session = None
@@ -858,12 +860,14 @@ async def generate_chat_completion(
                 ),
             )
         else:
+            print(payload)
             try:
                 response = await r.json()
             except Exception as e:
                 log.error(e)
                 response = await r.text()
-
+                response = json.loads(response)
+            print(response)
             r.raise_for_status()
             return response
     except Exception as e:
