@@ -77,7 +77,14 @@ async def send_get_request(url, key=None, user: UserModel = None):
                 },
                 ssl=AIOHTTP_CLIENT_SESSION_SSL,
             ) as response:
-                return await response.json()
+                try:
+                    ret = await response.json()
+                except Exception as e:
+                    # log.error(e)
+                    ret = await response.text()
+                    ret = json.loads(ret)
+
+                return ret
     except Exception as e:
         # Handle connection error here
         log.error(f"Connection error: {e}")
@@ -326,7 +333,7 @@ async def get_all_models_responses(request: Request, user: UserModel) -> list:
                         "data": [
                             {
                                 "id": model_id,
-                                "name": model_id,
+                                "name": f"(offline) {model_id}",
                                 "owned_by": "openai",
                                 "openai": {"id": model_id},
                                 "urlIdx": idx,
@@ -343,6 +350,48 @@ async def get_all_models_responses(request: Request, user: UserModel) -> list:
 
     responses = await asyncio.gather(*request_tasks)
 
+    request_tasks = []
+
+    for idx, url in enumerate(request.app.state.config.OPENAI_API_BASE_URLS):
+        api_config = request.app.state.config.OPENAI_API_CONFIGS.get(
+            str(idx),
+            request.app.state.config.OPENAI_API_CONFIGS.get(
+                url, {}
+            ),  # Legacy support
+        )
+
+        enable = api_config.get("enable", True)
+        model_ids = api_config.get("model_ids", [])
+
+        if enable:
+            if len(model_ids) > 0:
+                request_tasks.append(
+                    send_get_request(
+                        f"https://data-portal-dev.cels.anl.gov/resource_server/sophia/jobs",
+                        request.app.state.config.OPENAI_API_KEYS[idx],
+                        user=user,
+                    )
+                )
+        else:
+            request_tasks.append(asyncio.ensure_future(asyncio.sleep(0, None)))
+
+    model_status = await asyncio.gather(*request_tasks)
+    log.debug(f"get_all_models:model_status() {model_status}")
+
+    live_models = []
+    queued_models = []
+
+    for idx, status in enumerate(model_status):
+        if status:
+            for model in status["running"]:
+                live_models.extend(model["Models"].split(","))
+
+            for model in status["queued"]:
+                queued_models.extend(model["Models"].split(","))
+
+    log.debug(f"get_all_models:live_models() {live_models}")
+    log.debug(f"get_all_models:queue_models() {queued_models}")
+
     for idx, response in enumerate(responses):
         if response:
             url = request.app.state.config.OPENAI_API_BASE_URLS[idx]
@@ -354,6 +403,14 @@ async def get_all_models_responses(request: Request, user: UserModel) -> list:
             )
 
             connection_type = api_config.get("connection_type", "external")
+            for model in (
+                response if isinstance(response, list) else response.get("data", [])
+            ):
+                if model["id"] in live_models:
+                    model["name"] = f"{model['id']}"
+                if model["id"] in queued_models:
+                    model["name"] = f"(queued) {model['id']}"
+
             prefix_id = api_config.get("prefix_id", None)
             tags = api_config.get("tags", [])
 
@@ -864,7 +921,7 @@ async def generate_chat_completion(
             try:
                 response = await r.json()
             except Exception as e:
-                log.error(e)
+                # log.error(e)
                 response = await r.text()
                 response = json.loads(response)
             print(response)
