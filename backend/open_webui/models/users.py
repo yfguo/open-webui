@@ -111,6 +111,7 @@ class UsersTable:
         profile_image_url: str = "/user.png",
         role: str = "pending",
         oauth_sub: Optional[str] = None,
+        api_key: Optional[str] = None
     ) -> Optional[UserModel]:
         with get_db() as db:
             user = UserModel(
@@ -124,6 +125,7 @@ class UsersTable:
                     "created_at": int(time.time()),
                     "updated_at": int(time.time()),
                     "oauth_sub": oauth_sub,
+                    "api_key": api_key
                 }
             )
             result = User(**user.model_dump())
