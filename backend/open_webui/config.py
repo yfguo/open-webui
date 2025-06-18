@@ -316,7 +316,6 @@ GOOGLE_CLIENT_SECRET = PersistentConfig(
     os.environ.get("GOOGLE_CLIENT_SECRET", ""),
 )
 
-
 GOOGLE_OAUTH_SCOPE = PersistentConfig(
     "GOOGLE_OAUTH_SCOPE",
     "oauth.google.scope",
@@ -327,6 +326,30 @@ GOOGLE_REDIRECT_URI = PersistentConfig(
     "GOOGLE_REDIRECT_URI",
     "oauth.google.redirect_uri",
     os.environ.get("GOOGLE_REDIRECT_URI", ""),
+)
+
+GLOBUS_CLIENT_ID = PersistentConfig(
+    "GLOBUS_CLIENT_ID",
+    "oauth.globus.client_id",
+    os.environ.get("GLOBUS_CLIENT_ID", ""),
+)
+
+GLOBUS_CLIENT_SECRET = PersistentConfig(
+    "GLOBUS_CLIENT_SECRET",
+    "oauth.globus.client_secret",
+    os.environ.get("GLOBUS_CLIENT_SECRET", ""),
+)
+
+GLOBUS_OAUTH_SCOPE = PersistentConfig(
+    "GLOBUS_OAUTH_SCOPE",
+    "oauth.globus.scope",
+    os.environ.get("GLOBUS_OAUTH_SCOPE", "openid email profile"),
+)
+
+GLOBUS_REDIRECT_URI = PersistentConfig(
+    "GLOBUS_REDIRECT_URI",
+    "oauth.globus.redirect_uri",
+    os.environ.get("GLOBUS_REDIRECT_URI", ""),
 )
 
 MICROSOFT_CLIENT_ID = PersistentConfig(
@@ -547,6 +570,23 @@ def load_oauth_providers():
         OAUTH_PROVIDERS["google"] = {
             "redirect_uri": GOOGLE_REDIRECT_URI.value,
             "register": google_oauth_register,
+        }
+
+    if GLOBUS_CLIENT_ID.value and GLOBUS_CLIENT_SECRET.value:
+
+        def globus_oauth_register(client):
+            client.register(
+                name="globus",
+                client_id=GLOBUS_CLIENT_ID.value,
+                client_secret=GLOBUS_CLIENT_SECRET.value,
+                server_metadata_url="https://auth.globus.org/.well-known/openid-configuration",
+                client_kwargs={"scope": GLOBUS_OAUTH_SCOPE.value},
+                redirect_uri=GLOBUS_REDIRECT_URI.value,
+            )
+
+        OAUTH_PROVIDERS["globus"] = {
+            "redirect_uri": GLOBUS_REDIRECT_URI.value,
+            "register": globus_oauth_register,
         }
 
     if (
