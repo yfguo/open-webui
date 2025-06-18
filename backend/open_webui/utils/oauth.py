@@ -351,6 +351,11 @@ class OAuthManager:
         except Exception as e:
             log.warning(f"OAuth callback error: {e}")
             raise HTTPException(400, detail=ERROR_MESSAGES.INVALID_CRED)
+        
+        # [Addition]
+        # Try to extract the access token
+        user_access_token = token.get("access_token", None)
+
         user_data: UserInfo = token.get("userinfo")
         if not user_data or auth_manager_config.OAUTH_EMAIL_CLAIM not in user_data:
             user_data: UserInfo = await client.userinfo(token=token)
@@ -432,6 +437,11 @@ class OAuthManager:
             if user.role != determined_role:
                 Users.update_user_role_by_id(user.id, determined_role)
 
+            # [Addition]
+            # Update the API key (new access token from the latest authentication)
+            if user_access_token:
+                Users.update_user_api_key_by_id(user.id, user_access_token)
+
             # Update profile picture if enabled and different from current
             if auth_manager_config.OAUTH_UPDATE_PICTURE_ON_LOGIN:
                 picture_claim = auth_manager_config.OAUTH_PICTURE_CLAIM
@@ -478,16 +488,30 @@ class OAuthManager:
 
                 role = self.get_user_role(None, user_data)
 
-                user = Auths.insert_new_auth(
-                    email=email,
-                    password=get_password_hash(
-                        str(uuid.uuid4())
-                    ),  # Random password, not used
-                    name=name,
-                    profile_image_url=picture_url,
-                    role=role,
-                    oauth_sub=provider_sub,
-                )
+                # [Edit] - add the access token as the API key is available
+                if user_access_token:
+                    user = Auths.insert_new_auth(
+                        email=email,
+                        password=get_password_hash(
+                            str(uuid.uuid4())
+                        ),  # Random password, not used
+                        name=name,
+                        profile_image_url=picture_url,
+                        role=role,
+                        oauth_sub=provider_sub,
+                        api_key=user_access_token
+                    )
+                else:
+                    user = Auths.insert_new_auth(
+                        email=email,
+                        password=get_password_hash(
+                            str(uuid.uuid4())
+                        ),  # Random password, not used
+                        name=name,
+                        profile_image_url=picture_url,
+                        role=role,
+                        oauth_sub=provider_sub
+                    )
 
                 if auth_manager_config.WEBHOOK_URL:
                     post_webhook(
