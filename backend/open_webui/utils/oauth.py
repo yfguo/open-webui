@@ -37,6 +37,7 @@ from open_webui.config import (
     OAUTH_UPDATE_PICTURE_ON_LOGIN,
     WEBHOOK_URL,
     JWT_EXPIRES_IN,
+    GLOBUS_INFERENCE_SERVICE_SCOPE,
     AppConfig,
 )
 from open_webui.constants import ERROR_MESSAGES, WEBHOOK_MESSAGES
@@ -353,8 +354,17 @@ class OAuthManager:
             raise HTTPException(400, detail=ERROR_MESSAGES.INVALID_CRED)
         
         # [Addition]
-        # Try to extract the access token
-        user_access_token = token.get("access_token", None)
+        # Try to extract the access token issued by the WebUI Globus confidential client
+        # You need to select the access token tied to the inference service's scope
+        # Otherwise the Inference API confidential client won't have the permission to introspect the token
+        user_access_token = None
+        try:
+            user_other_tokens = token["other_tokens"]
+            for other_token in user_other_tokens:
+                if other_token["scope"] == GLOBUS_INFERENCE_SERVICE_SCOPE.value:
+                    user_access_token = other_token["access_token"]
+        except:
+            user_access_token = None
 
         user_data: UserInfo = token.get("userinfo")
         if not user_data or auth_manager_config.OAUTH_EMAIL_CLAIM not in user_data:
