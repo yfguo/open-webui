@@ -372,7 +372,7 @@ async def get_all_models_responses(request: Request, user: UserModel) -> list:
                 request_tasks.append(
                     send_get_request(
                         f"https://data-portal-dev.cels.anl.gov/resource_server/sophia/jobs",
-                        request.app.state.config.OPENAI_API_KEYS[idx],
+                        user.api_key if user.api_key else request.app.state.config.OPENAI_API_KEYS[idx],
                         user=user,
                     )
                 )
