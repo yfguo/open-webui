@@ -71,6 +71,7 @@
 
 	let selectedTag = '';
 	let selectedConnectionType = '';
+	let selectedStatus = 'live';
 
 	let ollamaVersion = null;
 	let selectedModelIdx = 0;
@@ -115,6 +116,17 @@
 							return item.model?.direct;
 						}
 					})
+					.filter((item) => {
+						if (selectedStatus === '') {
+							return true;
+						} else if (selectedStatus === 'live') {
+							return item.model?.status === 'live';
+						} else if (selectedStatus === 'queued') {
+							return item.model?.status === 'queued';
+						} else if (selectedStatus === 'offline') {
+							return item.model?.status === 'offline';
+						}
+					})
 			: items
 					.filter((item) => {
 						if (selectedTag === '') {
@@ -133,9 +145,20 @@
 							return item.model?.direct;
 						}
 					})
+					.filter((item) => {
+						if (selectedStatus === '') {
+							return true;
+						} else if (selectedStatus === 'live') {
+							return item.model?.status === 'live';
+						} else if (selectedStatus === 'queued') {
+							return item.model?.status === 'queued';
+						} else if (selectedStatus === 'offline') {
+							return item.model?.status === 'offline';
+						}
+					})
 	).filter((item) => !(item.model?.info?.meta?.hidden ?? false));
 
-	$: if (selectedTag || selectedConnectionType) {
+	$: if (selectedTag || selectedConnectionType || selectedStatus) {
 		resetView();
 	} else {
 		resetView();
@@ -425,15 +448,56 @@
 							class="flex gap-1 w-fit text-center text-sm font-medium rounded-full bg-transparent px-1.5 pb-0.5"
 							bind:this={tagsContainerElement}
 						>
+							<button
+								class="min-w-fit outline-none p-1.5 {selectedStatus === 'live'
+									? ''
+									: 'text-gray-300 dark:text-gray-600 hover:text-gray-700 dark:hover:text-white'} transition capitalize"
+								on:click={() => {
+									selectedTag = '';
+									selectedConnectionType = '';
+									selectedStatus = 'live';
+								}}
+							>
+								{$i18n.t('Live')}
+							</button>
+
+							<button
+								class="min-w-fit outline-none p-1.5 {selectedStatus === 'queued'
+									? ''
+									: 'text-gray-300 dark:text-gray-600 hover:text-gray-700 dark:hover:text-white'} transition capitalize"
+								on:click={() => {
+									selectedTag = '';
+									selectedConnectionType = '';
+									selectedStatus = 'queued';
+								}}
+							>
+								{$i18n.t('Queued')}
+							</button>
+
+							<button
+								class="min-w-fit outline-none p-1.5 {selectedStatus === 'offline'
+									? ''
+									: 'text-gray-300 dark:text-gray-600 hover:text-gray-700 dark:hover:text-white'} transition capitalize"
+								on:click={() => {
+									selectedTag = '';
+									selectedConnectionType = '';
+									selectedStatus = 'offline';
+								}}
+							>
+								{$i18n.t('Offline')}
+							</button>
+
 							{#if items.find((item) => item.model?.connection_type === 'local') || items.find((item) => item.model?.connection_type === 'external') || items.find((item) => item.model?.direct) || tags.length > 0}
 								<button
 									class="min-w-fit outline-none p-1.5 {selectedTag === '' &&
-									selectedConnectionType === ''
+									selectedConnectionType === '' &&
+									selectedStatus === ''
 										? ''
 										: 'text-gray-300 dark:text-gray-600 hover:text-gray-700 dark:hover:text-white'} transition capitalize"
 									on:click={() => {
 										selectedConnectionType = '';
 										selectedTag = '';
+										selectedStatus = '';
 									}}
 								>
 									{$i18n.t('All')}
@@ -448,6 +512,7 @@
 									on:click={() => {
 										selectedTag = '';
 										selectedConnectionType = 'local';
+										selectedStatus = '';
 									}}
 								>
 									{$i18n.t('Local')}
@@ -462,6 +527,7 @@
 									on:click={() => {
 										selectedTag = '';
 										selectedConnectionType = 'external';
+										selectedStatus = '';
 									}}
 								>
 									{$i18n.t('External')}
@@ -476,6 +542,7 @@
 									on:click={() => {
 										selectedTag = '';
 										selectedConnectionType = 'direct';
+										selectedStatus = '';
 									}}
 								>
 									{$i18n.t('Direct')}
@@ -490,6 +557,7 @@
 									on:click={() => {
 										selectedConnectionType = '';
 										selectedTag = tag;
+										selectedStatus = '';
 									}}
 								>
 									{tag}
