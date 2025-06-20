@@ -352,6 +352,12 @@ GLOBUS_REDIRECT_URI = PersistentConfig(
     os.environ.get("GLOBUS_REDIRECT_URI", ""),
 )
 
+GLOBUS_INFERENCE_SERVICE_SCOPE = PersistentConfig(
+    "GLOBUS_INFERENCE_SERVICE_SCOPE",
+    "oauth.globus.inference_service_scope",
+    os.environ.get("GLOBUS_INFERENCE_SERVICE_SCOPE", ""),
+)
+
 MICROSOFT_CLIENT_ID = PersistentConfig(
     "MICROSOFT_CLIENT_ID",
     "oauth.microsoft.client_id",

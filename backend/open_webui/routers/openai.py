@@ -890,7 +890,10 @@ async def generate_chat_completion(
         request_url = f"{request_url}/chat/completions?api-version={api_version}"
     else:
         request_url = f"{url}/chat/completions"
-        headers["Authorization"] = f"Bearer {key}"
+        # [Edits]
+        # Using the user's access token with the inference service scope as the API key
+        #headers["Authorization"] = f"Bearer {key}"
+        headers["Authorization"] = f"Bearer {user.api_key}"
 
     payload = json.dumps(payload)
     
