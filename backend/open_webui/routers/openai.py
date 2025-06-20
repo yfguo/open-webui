@@ -337,7 +337,7 @@ async def get_all_models_responses(request: Request, user: UserModel) -> list:
                         "data": [
                             {
                                 "id": model_id,
-                                "name": f"(offline) {model_id}",
+                                "name": model_id,
                                 "owned_by": "openai",
                                 "openai": {"id": model_id},
                                 "urlIdx": idx,
@@ -407,20 +407,19 @@ async def get_all_models_responses(request: Request, user: UserModel) -> list:
             )
 
             connection_type = api_config.get("connection_type", "external")
-            for model in (
-                response if isinstance(response, list) else response.get("data", [])
-            ):
-                if model["id"] in live_models:
-                    model["name"] = f"{model['id']}"
-                if model["id"] in queued_models:
-                    model["name"] = f"(queued) {model['id']}"
-
             prefix_id = api_config.get("prefix_id", None)
             tags = api_config.get("tags", [])
 
             for model in (
                 response if isinstance(response, list) else response.get("data", [])
             ):
+                if model["id"] in live_models:
+                    model["status"] = "live"
+                elif model["id"] in queued_models:
+                    model["status"] = "queued"
+                else:
+                    model["status"] = "offline"
+
                 if prefix_id:
                     model["id"] = f"{prefix_id}.{model['id']}"
 
