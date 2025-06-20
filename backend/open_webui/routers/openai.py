@@ -893,7 +893,7 @@ async def generate_chat_completion(
         # [Edits]
         # Using the user's access token with the inference service scope as the API key
         #headers["Authorization"] = f"Bearer {key}"
-        headers["Authorization"] = f"Bearer {user.api_key}"
+        headers["Authorization"] = f"Bearer {key}"
 
     payload = json.dumps(payload)
     
