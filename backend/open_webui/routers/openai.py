@@ -78,14 +78,17 @@ async def send_get_request(url, key=None, user: UserModel = None):
                 },
                 ssl=AIOHTTP_CLIENT_SESSION_SSL,
             ) as response:
-                try:
-                    ret = await response.json()
-                except Exception as e:
-                    # log.error(e)
-                    ret = await response.text()
-                    ret = json.loads(ret)
+                if response.ok:
+                    try:
+                        ret = await response.json()
+                    except Exception as e:
+                        ret = await response.text()
+                        ret = json.loads(ret)
 
-                return ret
+                    return ret
+                else:
+                    log.warning(f"request error: {url} key={key} user={{user}} {response.status}")
+                    return None
     except Exception as e:
         # Handle connection error here
         log.error(f"Connection error: {e}")
