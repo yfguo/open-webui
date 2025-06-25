@@ -71,4 +71,14 @@ fi
 
 PYTHON_CMD=$(command -v python3 || command -v python)
 
-WEBUI_SECRET_KEY="$WEBUI_SECRET_KEY" exec "$PYTHON_CMD" -m uvicorn open_webui.main:app --host "$HOST" --port "$PORT" --forwarded-allow-ips '*' --workers "${UVICORN_WORKERS:-1}"
+if [ -f $SSL_CERTFILE ]; then
+    if [ -f $SSL_KEYFILE ]; then
+        LAUNCH_HTTPS=yes
+    fi
+fi
+
+if test X"$LAUNCH_HTTPS" = "Xyes"; then
+    WEBUI_SECRET_KEY="$WEBUI_SECRET_KEY" exec "$PYTHON_CMD" -m uvicorn open_webui.main:app --host "$HOST" --port "$PORT" --forwarded-allow-ips '*' --workers "${UVICORN_WORKERS:-1}" --ssl-keyfile "$SSL_KEYFILE" --ssl-certfile "$SSL_CERTFILE"
+else
+    WEBUI_SECRET_KEY="$WEBUI_SECRET_KEY" exec "$PYTHON_CMD" -m uvicorn open_webui.main:app --host "$HOST" --port "$PORT" --forwarded-allow-ips '*' --workers "${UVICORN_WORKERS:-1}"
+fi
