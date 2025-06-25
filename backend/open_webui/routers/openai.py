@@ -4,6 +4,7 @@ import json
 import logging
 from pathlib import Path
 from typing import Literal, Optional, overload
+import time
 
 import aiohttp
 from aiocache import cached
@@ -121,6 +122,12 @@ def openai_o_series_handler(payload):
 
     return payload
 
+
+# cache model status globally
+model_status_last_update = 0
+model_status_ttl = 120
+live_models = []
+queued_models = []
 
 ##########################################
 #
@@ -279,6 +286,11 @@ async def speech(request: Request, user=Depends(get_verified_user)):
 
 
 async def get_all_models_responses(request: Request, user: UserModel) -> list:
+    global model_status_last_update
+    global model_status_ttl
+    global live_models
+    global queued_models
+
     if not request.app.state.config.ENABLE_OPENAI_API:
         return []
 
@@ -369,24 +381,28 @@ async def get_all_models_responses(request: Request, user: UserModel) -> list:
 
         if enable:
             if len(model_ids) > 0:
-                request_tasks.append(
-                    send_get_request(
-                        f"https://data-portal-dev.cels.anl.gov/resource_server/sophia/jobs",
-                        user.api_key if user.api_key else request.app.state.config.OPENAI_API_KEYS[idx],
-                        user=user,
+                if time.time() - model_status_last_update > model_status_ttl:
+                    request_tasks.append(
+                        send_get_request(
+                            f"https://data-portal-dev.cels.anl.gov/resource_server/sophia/jobs",
+                            user.api_key if user.api_key else request.app.state.config.OPENAI_API_KEYS[idx],
+                            user=user,
+                        )
                     )
-                )
+                else:
+                    request_tasks.append(asyncio.ensure_future(asyncio.sleep(0, None)))
+                    log.debug("skip jobs query due to TTL")
         else:
             request_tasks.append(asyncio.ensure_future(asyncio.sleep(0, None)))
 
     model_status = await asyncio.gather(*request_tasks)
-    log.debug(f"get_all_models:model_status() {model_status}")
+    log.debug(f"get_all_models: model_status {model_status}")
 
-    live_models = []
-    queued_models = []
+
 
     for idx, status in enumerate(model_status):
         if status and isinstance(status, dict):
+            model_status_last_update = time.time()
             for model in status["running"]:
                 live_models.extend(model["Models"].split(","))
 
@@ -802,7 +818,8 @@ async def generate_chat_completion(
                 detail="Model not found",
             )
 
-    await get_all_models(request, user=user)
+    # avoid frequent query for models
+    # await get_all_models(request, user=user)
     model = request.app.state.OPENAI_MODELS.get(model_id)
     if model:
         idx = model["urlIdx"]
