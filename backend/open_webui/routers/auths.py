@@ -3,7 +3,7 @@ import uuid
 import time
 import datetime
 import logging
-from aiohttp import ClientSession
+import aiohttp
 
 from open_webui.models.auths import (
     AddUserForm,
@@ -31,6 +31,10 @@ from open_webui.env import (
     WEBUI_AUTH_COOKIE_SECURE,
     WEBUI_AUTH_SIGNOUT_REDIRECT_URL,
     SRC_LOG_LEVELS,
+)
+from open_webui.env import (
+    AIOHTTP_CLIENT_TIMEOUT,
+    AIOHTTP_CLIENT_SESSION_SSL
 )
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import RedirectResponse, Response, JSONResponse
@@ -668,6 +672,23 @@ async def signup(request: Request, response: Response, form_data: SignupForm):
 
 @router.get("/signout")
 async def signout(request: Request, response: Response):
+    timeout = aiohttp.ClientTimeout(total=AIOHTTP_CLIENT_TIMEOUT)
+    try:
+        async with aiohttp.ClientSession(timeout=timeout, trust_env=True) as session:
+            async with session.get(
+                'https://auth.globus.org/v2/web/logout',
+                ssl=AIOHTTP_CLIENT_SESSION_SSL,
+            ) as resp:
+                if resp.ok:
+                    ret = await resp.text()
+                    log.debug(f"logout {ret}")
+                else:
+                    log.warning(f"logout error: {resp.status}")
+
+    except Exception as e:
+        # Handle connection error here
+        log.error(f"logout connection error: {e}")
+
     response.delete_cookie("token")
     oauth_id_token = request.cookies.get("oauth_id_token")
     if oauth_id_token:

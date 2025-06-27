@@ -382,7 +382,7 @@ class OAuthManager:
 
     async def handle_signout(self, request, provider, user):
         # FIXME: using a real logout endpoint
-        #        Temporarily using the web API to signout for client
+        #        Temporarily using the web API to signout everything
         if provider not in OAUTH_PROVIDERS:
             raise HTTPException(404)
         client = self.get_client(provider)
@@ -394,12 +394,14 @@ class OAuthManager:
             async with aiohttp.ClientSession(timeout=timeout, trust_env=True) as session:
                 async with session.get(
                     'https://auth.globus.org/v2/web/logout',
-                    params = {
-                        "client_id": f"{client.client_id}"
-                    },
+                    # params = {
+                    #     "client_id": f"{client.client_id}"
+                    # },
                     ssl=AIOHTTP_CLIENT_SESSION_SSL,
                 ) as response:
                     if response.ok:
+                        ret = await response.text()
+                        log.debug(f"logout {ret}")
                         return None
                     else:
                         log.warning(f"logout error: {response.status}")
