@@ -1702,6 +1702,9 @@ async def oauth_callback(provider: str, request: Request, response: Response):
 async def oauth_revoke_token(provider: str, request: Request, user=Depends(get_verified_user)):
     return await oauth_manager.handle_revoke(request, provider, user)
 
+@app.get("/oauth/{provider}/signout")
+async def oauth_signout(provider: str, request: Request, user=Depends(get_verified_user)):
+    return await oauth_manager.handle_signout(request, provider, user)
 
 @app.get("/manifest.json")
 async def get_manifest_json():
