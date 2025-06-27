@@ -4,6 +4,7 @@ import mimetypes
 import sys
 import uuid
 import json
+from urllib.parse import urljoin
 
 import aiohttp
 from authlib.integrations.starlette_client import OAuth
@@ -409,6 +410,16 @@ class OAuthManager:
         if not user_data:
             log.warning(f"OAuth callback failed, user data is missing: {token}")
             raise HTTPException(400, detail=ERROR_MESSAGES.INVALID_CRED)
+
+# FIXME: We should check if there is an access token for the API endpoint claim.
+#        But it always creates a access token albeit not usable with the API
+#        endpoint. So we can just check if the identity provider is corrent for
+#        now.
+        if user_data["identity_provider_display_name"] not in [
+            "Argonne National Laboratory",
+            "Argonne LCF"
+            ]:
+            return RedirectResponse(url=urljoin(str(request.app.state.config.WEBUI_URL), 'unauthorized'), headers=response.headers)
 
         sub = user_data.get(OAUTH_PROVIDERS[provider].get("sub_claim", "sub"))
         if not sub:
