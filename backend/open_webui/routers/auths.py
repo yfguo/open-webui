@@ -669,6 +669,10 @@ async def signup(request: Request, response: Response, form_data: SignupForm):
 @router.get("/signout")
 async def signout(request: Request, response: Response):
     response.delete_cookie("token")
+    oauth_id_token = request.cookies.get("oauth_id_token")
+    if oauth_id_token:
+        response.delete_cookie("oauth_id_token")
+        response.delete_cookie("oauth_provider")
 
 # [Edit] - Commenting below since Globus does hot have an end session endpoint
 #        - Full logout from Globus needs to be done by visiting https://app.globus.org/logout

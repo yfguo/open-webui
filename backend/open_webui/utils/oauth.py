@@ -380,6 +380,35 @@ class OAuthManager:
             log.error(f"token revocation error: {e}")
             return None
 
+    async def handle_signout(self, request, provider, user):
+        # FIXME: using a real logout endpoint
+        #        Temporarily using the web API to signout for client
+        if provider not in OAUTH_PROVIDERS:
+            raise HTTPException(404)
+        client = self.get_client(provider)
+        if client is None:
+            raise HTTPException(404)
+
+        timeout = aiohttp.ClientTimeout(total=AIOHTTP_CLIENT_TIMEOUT)
+        try:
+            async with aiohttp.ClientSession(timeout=timeout, trust_env=True) as session:
+                async with session.get(
+                    'https://auth.globus.org/v2/web/logout',
+                    params = {
+                        "client_id": f"{client.client_id}"
+                    },
+                    ssl=AIOHTTP_CLIENT_SESSION_SSL,
+                ) as response:
+                    if response.ok:
+                        return None
+                    else:
+                        log.warning(f"logout error: {response.status}")
+                        return None
+        except Exception as e:
+            # Handle connection error here
+            log.error(f"logout connection error: {e}")
+            return None
+
     async def handle_callback(self, request, provider, response):
         if provider not in OAUTH_PROVIDERS:
             raise HTTPException(404)
