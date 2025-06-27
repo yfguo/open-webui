@@ -1,4 +1,5 @@
 import { WEBUI_API_BASE_URL } from '$lib/constants';
+import { WEBUI_BASE_URL } from '$lib/constants';
 
 export const getAdminDetails = async (token: string) => {
 	let error = null;
@@ -323,6 +324,34 @@ export const userSignUp = async (
 
 	return res;
 };
+
+export const userRevokeToken = async (token: string) => {
+	let error = null;
+
+	const res = await fetch(`${WEBUI_BASE_URL}/oauth/globus/token/revoke`, {
+		method: 'GET',
+		headers: {
+			'Content-Type': 'application/json',
+			...(token && { authorization: `Bearer ${token}` })
+		},
+		credentials: 'include'
+	})
+		.then(async (res) => {
+			if (!res.ok) throw await res.json();
+			return res.json();
+		})
+		.catch((err) => {
+			console.error(err);
+			error = err.detail;
+			return null;
+		});
+
+	if (error) {
+		throw error;
+	}
+
+	return res;
+}
 
 export const userSignOut = async () => {
 	let error = null;
