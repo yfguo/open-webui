@@ -42,6 +42,7 @@ from open_webui.config import (
 )
 from open_webui.constants import ERROR_MESSAGES, WEBHOOK_MESSAGES
 from open_webui.env import (
+    AIOHTTP_CLIENT_TIMEOUT,
     AIOHTTP_CLIENT_SESSION_SSL,
     WEBUI_NAME,
     WEBUI_AUTH_COOKIE_SAME_SITE,
@@ -343,6 +344,41 @@ class OAuthManager:
             raise HTTPException(404)
         return await client.authorize_redirect(request, redirect_uri)
 
+    async def handle_revoke(self, request, provider, user):
+        if provider not in OAUTH_PROVIDERS:
+            raise HTTPException(404)
+        client = self.get_client(provider)
+        if client is None:
+            raise HTTPException(404)
+        await client.load_server_metadata()
+        revocation_endpoint = client.server_metadata["revocation_endpoint"]
+        basic_auth=base64.b64encode(f"{client.client_id}:{client.client_secret}".encode("utf-8")).decode("utf-8")
+        log.debug(f"basic_auth {basic_auth}")
+
+        timeout = aiohttp.ClientTimeout(total=AIOHTTP_CLIENT_TIMEOUT)
+        try:
+            async with aiohttp.ClientSession(timeout=timeout, trust_env=True) as session:
+                async with session.post(
+                    revocation_endpoint,
+                    headers={
+                        **({"Authorization": f"Basic {basic_auth}"}),
+                        **({"Content-Type": "application/json"}),
+                    },
+                    data = {
+                        "token": f"{user.api_key}"
+                    },
+                    ssl=AIOHTTP_CLIENT_SESSION_SSL,
+                ) as response:
+                    if response.ok:
+                        return None
+                    else:
+                        log.warning(f"token revocation error: {revocation_endpoint} user={user} {response.status}")
+                        return None
+        except Exception as e:
+            # Handle connection error here
+            log.error(f"token revocation error: {e}")
+            return None
+
     async def handle_callback(self, request, provider, response):
         if provider not in OAUTH_PROVIDERS:
             raise HTTPException(404)
@@ -357,6 +393,7 @@ class OAuthManager:
         # Try to extract the access token issued by the WebUI Globus confidential client
         # You need to select the access token tied to the inference service's scope
         # Otherwise the Inference API confidential client won't have the permission to introspect the token
+        log.debug(f"token {token}")
         user_access_token = None
         try:
             user_other_tokens = token["other_tokens"]
@@ -555,6 +592,13 @@ class OAuthManager:
         response.set_cookie(
             key="token",
             value=jwt_token,
+            httponly=True,  # Ensures the cookie is not accessible via JavaScript
+            samesite=WEBUI_AUTH_COOKIE_SAME_SITE,
+            secure=WEBUI_AUTH_COOKIE_SECURE,
+        )
+        response.set_cookie(
+            key="oauth_provider",
+            value=provider,
             httponly=True,  # Ensures the cookie is not accessible via JavaScript
             samesite=WEBUI_AUTH_COOKIE_SAME_SITE,
             secure=WEBUI_AUTH_COOKIE_SECURE,

@@ -42,6 +42,7 @@ from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi import Depends
 
 from starlette_compress import CompressMiddleware
 
@@ -53,6 +54,7 @@ from starlette.responses import Response, StreamingResponse
 
 from open_webui.utils import logger
 from open_webui.utils.audit import AuditLevel, AuditLoggingMiddleware
+from open_webui.utils.auth import get_verified_user
 from open_webui.utils.logger import start_logger
 from open_webui.socket.main import (
     app as socket_app,
@@ -1695,6 +1697,10 @@ async def oauth_login(provider: str, request: Request):
 @app.get("/oauth/{provider}/callback")
 async def oauth_callback(provider: str, request: Request, response: Response):
     return await oauth_manager.handle_callback(request, provider, response)
+
+@app.get("/oauth/{provider}/token/revoke")
+async def oauth_revoke_token(provider: str, request: Request, user=Depends(get_verified_user)):
+    return await oauth_manager.handle_revoke(request, provider, user)
 
 
 @app.get("/manifest.json")
