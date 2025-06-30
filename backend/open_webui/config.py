@@ -358,6 +358,12 @@ GLOBUS_INFERENCE_SERVICE_SCOPE = PersistentConfig(
     os.environ.get("GLOBUS_INFERENCE_SERVICE_SCOPE", ""),
 )
 
+GLOBUS_HIGH_ASSURANCE_POLICY = PersistentConfig(
+    "GLOBUS_HIGH_ASSURANCE_POLICY",
+    "oauth.globus.globus_high_assurance_policy",
+    os.environ.get("GLOBUS_HIGH_ASSURANCE_POLICY", ""),
+)
+
 MICROSOFT_CLIENT_ID = PersistentConfig(
     "MICROSOFT_CLIENT_ID",
     "oauth.microsoft.client_id",
