@@ -1,3 +1,4 @@
+import globus_sdk
 import base64
 import logging
 import mimetypes
@@ -39,6 +40,9 @@ from open_webui.config import (
     WEBHOOK_URL,
     JWT_EXPIRES_IN,
     GLOBUS_INFERENCE_SERVICE_SCOPE,
+    GLOBUS_CLIENT_ID,
+    GLOBUS_CLIENT_SECRET,
+    GLOBUS_HIGH_ASSURANCE_POLICY,
     AppConfig,
 )
 from open_webui.constants import ERROR_MESSAGES, WEBHOOK_MESSAGES
@@ -441,16 +445,37 @@ class OAuthManager:
         if not user_data:
             log.warning(f"OAuth callback failed, user data is missing: {token}")
             raise HTTPException(400, detail=ERROR_MESSAGES.INVALID_CRED)
+        
+        # Create a Globus confidential client using the app credentials
+        globus_client = globus_sdk.ConfidentialAppAuthClient(GLOBUS_CLIENT_ID, GLOBUS_CLIENT_SECRET)
+
+        # Introspect the access token with a Globus HA policy (API call to Globus Auth)
+        introspect_body = {
+            "token": user_access_token,
+            "authentication_policies": GLOBUS_HIGH_ASSURANCE_POLICY.value,
+            "include": "session_info,identity_set_detail"
+        }
+        introspection = globus_client.post("/v2/oauth2/token/introspect", data=introspect_body, encoding="form")
+
+        # Define whether the user is authorized to use the service (False if something goes wrong)
+        try:
+            is_authorized = introspection["policy_evaluations"][GLOBUS_HIGH_ASSURANCE_POLICY.value]["evaluation"]
+        except:
+            is_authorized = False
+
+        # Refuse access if user not authorized
+        if not is_authorized:
+            return RedirectResponse(url=urljoin(str(request.app.state.config.WEBUI_URL), 'unauthorized'), headers=response.headers)
 
 # FIXME: We should check if there is an access token for the API endpoint claim.
 #        But it always creates a access token albeit not usable with the API
 #        endpoint. So we can just check if the identity provider is corrent for
 #        now.
-        if user_data["identity_provider_display_name"] not in [
-            "Argonne National Laboratory",
-            "Argonne LCF"
-            ]:
-            return RedirectResponse(url=urljoin(str(request.app.state.config.WEBUI_URL), 'unauthorized'), headers=response.headers)
+        #if user_data["identity_provider_display_name"] not in [
+        #    "Argonne National Laboratory",
+        #    "Argonne LCF"
+        #    ]:
+        #    return RedirectResponse(url=urljoin(str(request.app.state.config.WEBUI_URL), 'unauthorized'), headers=response.headers)
 
         sub = user_data.get(OAUTH_PROVIDERS[provider].get("sub_claim", "sub"))
         if not sub:
