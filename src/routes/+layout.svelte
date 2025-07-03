@@ -590,14 +590,14 @@
 					} else {
 						// Don't redirect if we're already on the auth page or unauthorized page
 						// Needed because we pass in tokens from OAuth logins via URL fragments
-						if ($page.url.pathname !== '/auth' && $page.url.pathname !== '/unauthorized') {
+						if ($page.url.pathname !== '/auth' && $page.url.pathname !== '/unauthorized' && $page.url.pathname !== '/oldauth') {
 							await goto(`/auth?redirect=${encodedUrl}`);
 						}
 					}
 				} else {
 					// Don't redirect if we're already on the auth page or unauthorized page
 					// Needed because we pass in tokens from OAuth logins via URL fragments
-					if ($page.url.pathname !== '/auth' && $page.url.pathname !== '/unauthorized') {
+					if ($page.url.pathname !== '/auth' && $page.url.pathname !== '/unauthorized' && $page.url.pathname !== '/oldauth') {
 						await goto(`/auth?redirect=${encodedUrl}`);
 					}
 				}
