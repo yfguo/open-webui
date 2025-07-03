@@ -76,7 +76,8 @@
 		chatAction,
 		generateMoACompletion,
 		stopTask,
-		getTaskIdsByChatId
+		getTaskIdsByChatId,
+		getModels
 	} from '$lib/apis';
 	import { getTools } from '$lib/apis/tools';
 
@@ -1391,6 +1392,22 @@
 		}
 
 		prompt = '';
+
+		// Check if any selected models are offline and trigger force update
+		const offlineModels = selectedModels
+			.map((id) => $models.find((m) => m.id === id))
+			.filter((model) => model && model.status === 'offline');
+
+		if (offlineModels.length > 0) {
+			console.log('Force updating models due to offline models:', offlineModels.map(m => m.id));
+			try {
+				// Force update the models store to get latest status
+				const updatedModels = await getModels(localStorage.token, null, false, true);
+				models.set(updatedModels);
+			} catch (error) {
+				console.error('Failed to force update models:', error);
+			}
+		}
 
 		// Reset chat input textarea
 		if (!($settings?.richTextInput ?? true)) {
