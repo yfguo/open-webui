@@ -330,7 +330,7 @@ def merge_ollama_models_lists(model_lists):
 
 
 @cached(ttl=1)
-async def get_all_models(request: Request, user: UserModel = None):
+async def get_all_models(request: Request, user: UserModel = None, force_update: bool = False):
     log.info("get_all_models()")
     if request.app.state.config.ENABLE_OLLAMA_API:
         request_tasks = []

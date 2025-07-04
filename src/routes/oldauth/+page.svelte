@@ -239,138 +239,134 @@
 								{/if}
 							</div>
 
-							<!-- {#if $config?.features.enable_login_form || $config?.features.enable_ldap} -->
-							<!-- 	<div class="flex flex-col mt-4"> -->
-							<!-- 		{#if mode === 'signup'} -->
-							<!-- 			<div class="mb-2"> -->
-							<!-- 				<label for="name" class="text-sm font-medium text-left mb-1 block" -->
-							<!-- 					>{$i18n.t('Name')}</label -->
-							<!-- 				> -->
-							<!-- 				<input -->
-							<!-- 					bind:value={name} -->
-							<!-- 					type="text" -->
-							<!-- 					id="name" -->
-							<!-- 					class="my-0.5 w-full text-sm outline-hidden bg-transparent" -->
-							<!-- 					autocomplete="name" -->
-							<!-- 					placeholder={$i18n.t('Enter Your Full Name')} -->
-							<!-- 					required -->
-							<!-- 				/> -->
-							<!-- 			</div> -->
-							<!-- 		{/if} -->
-							<!---->
-							<!-- 		{#if mode === 'ldap'} -->
-							<!-- 			<div class="mb-2"> -->
-							<!-- 				<label for="username" class="text-sm font-medium text-left mb-1 block" -->
-							<!-- 					>{$i18n.t('Username')}</label -->
-							<!-- 				> -->
-							<!-- 				<input -->
-							<!-- 					bind:value={ldapUsername} -->
-							<!-- 					type="text" -->
-							<!-- 					class="my-0.5 w-full text-sm outline-hidden bg-transparent" -->
-							<!-- 					autocomplete="username" -->
-							<!-- 					name="username" -->
-							<!-- 					id="username" -->
-							<!-- 					placeholder={$i18n.t('Enter Your Username')} -->
-							<!-- 					required -->
-							<!-- 				/> -->
-							<!-- 			</div> -->
-							<!-- 		{:else} -->
-							<!-- 			<div class="mb-2"> -->
-							<!-- 				<label for="email" class="text-sm font-medium text-left mb-1 block" -->
-							<!-- 					>{$i18n.t('Email')}</label -->
-							<!-- 				> -->
-							<!-- 				<input -->
-							<!-- 					bind:value={email} -->
-							<!-- 					type="email" -->
-							<!-- 					id="email" -->
-							<!-- 					class="my-0.5 w-full text-sm outline-hidden bg-transparent" -->
-							<!-- 					autocomplete="email" -->
-							<!-- 					name="email" -->
-							<!-- 					placeholder={$i18n.t('Enter Your Email')} -->
-							<!-- 					required -->
-							<!-- 				/> -->
-							<!-- 			</div> -->
-							<!-- 		{/if} -->
-							<!---->
-							<!-- 		<div> -->
-							<!-- 			<label for="password" class="text-sm font-medium text-left mb-1 block" -->
-							<!-- 				>{$i18n.t('Password')}</label -->
-							<!-- 			> -->
-							<!-- 			<input -->
-							<!-- 				bind:value={password} -->
-							<!-- 				type="password" -->
-							<!-- 				id="password" -->
-							<!-- 				class="my-0.5 w-full text-sm outline-hidden bg-transparent" -->
-							<!-- 				placeholder={$i18n.t('Enter Your Password')} -->
-							<!-- 				autocomplete="current-password" -->
-							<!-- 				name="current-password" -->
-							<!-- 				required -->
-							<!-- 			/> -->
-							<!-- 		</div> -->
-							<!-- 	</div> -->
-							<!-- {/if} -->
-							<!-- <div class="mt-5"> -->
-							<!-- 	{#if $config?.features.enable_login_form || $config?.features.enable_ldap} -->
-							<!-- 		{#if mode === 'ldap'} -->
-							<!-- 			<button -->
-							<!-- 				class="bg-gray-700/5 hover:bg-gray-700/10 dark:bg-gray-100/5 dark:hover:bg-gray-100/10 dark:text-gray-300 dark:hover:text-white transition w-full rounded-full font-medium text-sm py-2.5" -->
-							<!-- 				type="submit" -->
-							<!-- 			> -->
-							<!-- 				{$i18n.t('Authenticate')} -->
-							<!-- 			</button> -->
-							<!-- 		{:else} -->
-							<!-- 			<button -->
-							<!-- 				class="bg-gray-700/5 hover:bg-gray-700/10 dark:bg-gray-100/5 dark:hover:bg-gray-100/10 dark:text-gray-300 dark:hover:text-white transition w-full rounded-full font-medium text-sm py-2.5" -->
-							<!-- 				type="submit" -->
-							<!-- 			> -->
-							<!-- 				{mode === 'signin' -->
-							<!-- 					? $i18n.t('Sign in') -->
-							<!-- 					: ($config?.onboarding ?? false) -->
-							<!-- 						? $i18n.t('Create Admin Account') -->
-							<!-- 						: $i18n.t('Create Account')} -->
-							<!-- 			</button> -->
-							<!---->
-							<!-- 			{#if $config?.features.enable_signup && !($config?.onboarding ?? false)} -->
-							<!-- 				<div class=" mt-4 text-sm text-center"> -->
-							<!-- 					{mode === 'signin' -->
-							<!-- 						? $i18n.t("Don't have an account?") -->
-							<!-- 						: $i18n.t('Already have an account?')} -->
-							<!---->
-							<!-- 					<button -->
-							<!-- 						class=" font-medium underline" -->
-							<!-- 						type="button" -->
-							<!-- 						on:click={() => { -->
-							<!-- 							if (mode === 'signin') { -->
-							<!-- 								mode = 'signup'; -->
-							<!-- 							} else { -->
-							<!-- 								mode = 'signin'; -->
-							<!-- 							} -->
-							<!-- 						}} -->
-							<!-- 					> -->
-							<!-- 						{mode === 'signin' ? $i18n.t('Sign up') : $i18n.t('Sign in')} -->
-							<!-- 					</button> -->
-							<!-- 				</div> -->
-							<!-- 			{/if} -->
-							<!-- 		{/if} -->
-							<!-- 	{/if} -->
-							<!-- </div> -->
+							{#if $config?.features.enable_login_form || $config?.features.enable_ldap}
+								<div class="flex flex-col mt-4">
+									{#if mode === 'signup'}
+										<div class="mb-2">
+											<label for="name" class="text-sm font-medium text-left mb-1 block"
+												>{$i18n.t('Name')}</label
+											>
+											<input
+												bind:value={name}
+												type="text"
+												id="name"
+												class="my-0.5 w-full text-sm outline-hidden bg-transparent"
+												autocomplete="name"
+												placeholder={$i18n.t('Enter Your Full Name')}
+												required
+											/>
+										</div>
+									{/if}
+
+									{#if mode === 'ldap'}
+										<div class="mb-2">
+											<label for="username" class="text-sm font-medium text-left mb-1 block"
+												>{$i18n.t('Username')}</label
+											>
+											<input
+												bind:value={ldapUsername}
+												type="text"
+												class="my-0.5 w-full text-sm outline-hidden bg-transparent"
+												autocomplete="username"
+												name="username"
+												id="username"
+												placeholder={$i18n.t('Enter Your Username')}
+												required
+											/>
+										</div>
+									{:else}
+										<div class="mb-2">
+											<label for="email" class="text-sm font-medium text-left mb-1 block"
+												>{$i18n.t('Email')}</label
+											>
+											<input
+												bind:value={email}
+												type="email"
+												id="email"
+												class="my-0.5 w-full text-sm outline-hidden bg-transparent"
+												autocomplete="email"
+												name="email"
+												placeholder={$i18n.t('Enter Your Email')}
+												required
+											/>
+										</div>
+									{/if}
+
+									<div>
+										<label for="password" class="text-sm font-medium text-left mb-1 block"
+											>{$i18n.t('Password')}</label
+										>
+										<input
+											bind:value={password}
+											type="password"
+											id="password"
+											class="my-0.5 w-full text-sm outline-hidden bg-transparent"
+											placeholder={$i18n.t('Enter Your Password')}
+											autocomplete="current-password"
+											name="current-password"
+											required
+										/>
+									</div>
+								</div>
+							{/if}
+							<div class="mt-5">
+								{#if $config?.features.enable_login_form || $config?.features.enable_ldap}
+									{#if mode === 'ldap'}
+										<button
+											class="bg-gray-700/5 hover:bg-gray-700/10 dark:bg-gray-100/5 dark:hover:bg-gray-100/10 dark:text-gray-300 dark:hover:text-white transition w-full rounded-full font-medium text-sm py-2.5"
+											type="submit"
+										>
+											{$i18n.t('Authenticate')}
+										</button>
+									{:else}
+										<button
+											class="bg-gray-700/5 hover:bg-gray-700/10 dark:bg-gray-100/5 dark:hover:bg-gray-100/10 dark:text-gray-300 dark:hover:text-white transition w-full rounded-full font-medium text-sm py-2.5"
+											type="submit"
+										>
+											{mode === 'signin'
+												? $i18n.t('Sign in')
+												: ($config?.onboarding ?? false)
+													? $i18n.t('Create Admin Account')
+													: $i18n.t('Create Account')}
+										</button>
+
+										{#if $config?.features.enable_signup && !($config?.onboarding ?? false)}
+											<div class=" mt-4 text-sm text-center">
+												{mode === 'signin'
+													? $i18n.t("Don't have an account?")
+													: $i18n.t('Already have an account?')}
+
+												<button
+													class=" font-medium underline"
+													type="button"
+													on:click={() => {
+														if (mode === 'signin') {
+															mode = 'signup';
+														} else {
+															mode = 'signin';
+														}
+													}}
+												>
+													{mode === 'signin' ? $i18n.t('Sign up') : $i18n.t('Sign in')}
+												</button>
+											</div>
+										{/if}
+									{/if}
+								{/if}
+							</div>
 						</form>
 
 						{#if Object.keys($config?.oauth?.providers ?? {}).length > 0}
 							<div class="inline-flex items-center justify-center w-full">
-								<hr class="w-12 h-px my-4 border-0 dark:bg-gray-100/10 bg-gray-700/10" />
-								<!-- {#if $config?.features.enable_login_form || $config?.features.enable_ldap} -->
-								<!-- 	<span -->
-								<!-- 		class="px-3 text-sm font-medium text-gray-900 dark:text-white bg-transparent" -->
-								<!-- 		>{$i18n.t('or')}</span -->
-								<!-- 	> -->
-								<!-- {/if} -->
+								<hr class="w-32 h-px my-4 border-0 dark:bg-gray-100/10 bg-gray-700/10" />
+								{#if $config?.features.enable_login_form || $config?.features.enable_ldap}
+									<span
+										class="px-3 text-sm font-medium text-gray-900 dark:text-white bg-transparent"
+										>{$i18n.t('or')}</span
+									>
+								{/if}
 
-								<span
-									class="px-3 text-sm font-medium text-gray-900 dark:text-white bg-transparent"
-									>{$i18n.t('Please use Globus to sign in')}</span
-								>
-								<hr class="w-12 h-px my-4 border-0 dark:bg-gray-100/10 bg-gray-700/10" />
+								<hr class="w-32 h-px my-4 border-0 dark:bg-gray-100/10 bg-gray-700/10" />
 							</div>
 							<div class="flex flex-col space-y-2">
 								{#if $config?.oauth?.providers?.google}

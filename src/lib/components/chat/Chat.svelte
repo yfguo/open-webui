@@ -76,7 +76,8 @@
 		chatAction,
 		generateMoACompletion,
 		stopTask,
-		getTaskIdsByChatId
+		getTaskIdsByChatId,
+		getModels
 	} from '$lib/apis';
 	import { getTools } from '$lib/apis/tools';
 
@@ -90,6 +91,7 @@
 	import NotificationToast from '../NotificationToast.svelte';
 	import Spinner from '../common/Spinner.svelte';
 	import { fade } from 'svelte/transition';
+	import ModelStatusBanner from './ModelStatusBanner.svelte';
 
 	export let chatIdProp = '';
 
@@ -1391,6 +1393,22 @@
 
 		prompt = '';
 
+		// Check if any selected models are offline and trigger force update
+		const offlineModels = selectedModels
+			.map((id) => $models.find((m) => m.id === id))
+			.filter((model) => model && model.status === 'offline');
+
+		if (offlineModels.length > 0) {
+			console.log('Force updating models due to offline models:', offlineModels.map(m => m.id));
+			try {
+				// Force update the models store to get latest status
+				const updatedModels = await getModels(localStorage.token, null, false, true);
+				models.set(updatedModels);
+			} catch (error) {
+				console.error('Failed to force update models:', error);
+			}
+		}
+
 		// Reset chat input textarea
 		if (!($settings?.richTextInput ?? true)) {
 			const chatInputElement = document.getElementById('chat-input');
@@ -2100,6 +2118,8 @@
 							</div>
 
 							<div class=" pb-2">
+								<ModelStatusBanner {selectedModels} models={$models} />
+								
 								<MessageInput
 									{history}
 									{taskIds}
@@ -2159,43 +2179,45 @@
 								</div>
 							</div>
 						{:else}
-							<div class="overflow-auto w-full h-full flex items-center">
-								<Placeholder
-									{history}
-									{selectedModels}
-									bind:files
-									bind:prompt
-									bind:autoScroll
-									bind:selectedToolIds
-									bind:selectedFilterIds
-									bind:imageGenerationEnabled
-									bind:codeInterpreterEnabled
-									bind:webSearchEnabled
-									bind:atSelectedModel
-									transparentBackground={$settings?.backgroundImageUrl ?? false}
-									toolServers={$toolServers}
-									{stopResponse}
-									{createMessagePair}
-									on:upload={async (e) => {
-										const { type, data } = e.detail;
+							<div class="overflow-auto w-full h-full flex flex-col">
+								<div class="flex items-center flex-1">
+									<Placeholder
+										{history}
+										{selectedModels}
+										bind:files
+										bind:prompt
+										bind:autoScroll
+										bind:selectedToolIds
+										bind:selectedFilterIds
+										bind:imageGenerationEnabled
+										bind:codeInterpreterEnabled
+										bind:webSearchEnabled
+										bind:atSelectedModel
+										transparentBackground={$settings?.backgroundImageUrl ?? false}
+										toolServers={$toolServers}
+										{stopResponse}
+										{createMessagePair}
+										on:upload={async (e) => {
+											const { type, data } = e.detail;
 
-										if (type === 'web') {
-											await uploadWeb(data);
-										} else if (type === 'youtube') {
-											await uploadYoutubeTranscription(data);
-										}
-									}}
-									on:submit={async (e) => {
-										if (e.detail || files.length > 0) {
-											await tick();
-											submitPrompt(
-												($settings?.richTextInput ?? true)
-													? e.detail.replaceAll('\n\n', '\n')
-													: e.detail
-											);
-										}
-									}}
-								/>
+											if (type === 'web') {
+												await uploadWeb(data);
+											} else if (type === 'youtube') {
+												await uploadYoutubeTranscription(data);
+											}
+										}}
+										on:submit={async (e) => {
+											if (e.detail || files.length > 0) {
+												await tick();
+												submitPrompt(
+													($settings?.richTextInput ?? true)
+														? e.detail.replaceAll('\n\n', '\n')
+														: e.detail
+												);
+											}
+										}}
+									/>
+								</div>
 							</div>
 						{/if}
 					</div>

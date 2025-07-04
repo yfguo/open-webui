@@ -30,6 +30,7 @@ from fastapi import (
     File,
     Form,
     HTTPException,
+    Query,
     Request,
     UploadFile,
     status,
@@ -1190,7 +1191,11 @@ if audit_level != AuditLevel.NONE:
 
 
 @app.get("/api/models")
-async def get_models(request: Request, user=Depends(get_verified_user)):
+async def get_models(
+    request: Request,
+    user=Depends(get_verified_user),
+    force_update: bool = Query(False, description="Force update model status, bypassing cache")
+):
     def get_filtered_models(models, user):
         filtered_models = []
         for model in models:
@@ -1214,7 +1219,7 @@ async def get_models(request: Request, user=Depends(get_verified_user)):
 
         return filtered_models
 
-    all_models = await get_all_models(request, user=user)
+    all_models = await get_all_models(request, user=user, force_update=force_update)
 
     models = []
     for model in all_models:
