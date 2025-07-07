@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { DropdownMenu } from 'bits-ui';
 	import { createEventDispatcher, getContext, onMount } from 'svelte';
+	import type { Writable } from 'svelte/store';
+	import type { i18n as i18nType } from 'i18next';
 
 	import { flyAndScale } from '$lib/utils/transitions';
 	import { goto } from '$app/navigation';
@@ -22,7 +24,7 @@
 	import UserGroup from '$lib/components/icons/UserGroup.svelte';
 	import SignOut from '$lib/components/icons/SignOut.svelte';
 
-	const i18n = getContext('i18n');
+	const i18n = getContext<Writable<i18nType>>('i18n');
 
 	export let show = false;
 	export let role = '';
@@ -33,7 +35,7 @@
 
 	const dispatch = createEventDispatcher();
 
-	let usage = null;
+	let usage: any = null;
 	const getUsageInfo = async () => {
 		const res = await getUsage(localStorage.token).catch((error) => {
 			console.error('Error fetching usage info:', error);
@@ -189,12 +191,12 @@
 			<button
 				class="flex rounded-md py-1.5 px-3 w-full hover:bg-gray-50 dark:hover:bg-gray-800 transition"
 				on:click={async () => {
-					const revoke_ret = await userRevokeToken(localStorage.token);
-					console.log(revoke_ret)
+					// const revoke_ret = await userRevokeToken(localStorage.token);
+					// console.log('revoke token', revoke_ret)
 					const signout_ret = await userOauthSignOut(localStorage.token);
-					console.log(signout_ret)
+					console.log('oauth signout', signout_ret)
 					const res = await userSignOut();
-					user.set(null);
+					user.set(undefined);
 					localStorage.removeItem('token');
 
 					location.href = res?.redirect_url ?? '/auth';
@@ -202,7 +204,7 @@
 				}}
 			>
 				<div class=" self-center mr-3">
-					<SignOut className="w-5 h-5" strokeWidth="1.5" />
+					<SignOut className="w-5 h-5" />
 				</div>
 				<div class=" self-center truncate">{$i18n.t('Sign Out')}</div>
 			</button>

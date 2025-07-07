@@ -1518,6 +1518,10 @@ async def get_app_config(request: Request):
             "providers": {
                 name: config.get("name", name)
                 for name, config in OAUTH_PROVIDERS.items()
+            },
+            "client_ids": {
+                name: oauth_manager.get_client(name).client_id if oauth_manager.get_client(name) else None
+                for name in OAUTH_PROVIDERS.keys()
             }
         },
         "features": {

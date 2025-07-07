@@ -33,6 +33,7 @@
 
 	import { executeToolServer, getBackendConfig } from '$lib/apis';
 	import { getSessionUser, userSignOut } from '$lib/apis/auths';
+	import { startAutoLogout, stopAutoLogout } from '$lib/utils/autoLogout';
 
 	import '../tailwind.css';
 	import '../app.css';
@@ -535,9 +536,21 @@
 					clearInterval(tokenTimer);
 				}
 				tokenTimer = setInterval(checkTokenExpiry, 15000);
+
+				// Start auto-logout functionality
+				const autoLogoutManager = startAutoLogout({
+					inactivityTimeout: 60, // 60 minutes
+					warningTime: 5, // 5 minutes warning
+					checkInterval: 30 // check every 30 seconds
+				});
+				// Set i18n context for auto-logout messages
+				autoLogoutManager.setI18n(i18n);
 			} else {
 				$socket?.off('chat-events', chatEventHandler);
 				$socket?.off('channel-events', channelEventHandler);
+
+				// Stop auto-logout functionality when user logs out
+				stopAutoLogout();
 			}
 		});
 
@@ -641,6 +654,7 @@
 
 		return () => {
 			window.removeEventListener('resize', onResize);
+			stopAutoLogout();
 		};
 	});
 </script>

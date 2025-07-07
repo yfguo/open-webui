@@ -85,16 +85,15 @@
 						style="white-space: pre-wrap;"
 					>
 						{$i18n.t('Account Not Authorized')}<br />
-						{$i18n.t('Contact Admin for WebUI Access')}
+						<!-- {$i18n.t('Contact Admin for WebUI Access')} -->
 					</div>
 
-					<div
-						class=" mt-4 text-center text-sm dark:text-gray-200 w-full"
-						style="white-space: pre-wrap;"
-					>
-						{$i18n.t('Your account is not authorized to access this service.')}{'\n'}{$i18n.t(
-							'Please check if you are logining into the correct organization. If the problem persists, please reach out to the administrator.'
-						)}
+					<div class="mt-4 text-center text-sm dark:text-gray-200 w-full">
+						<span>{$i18n.t('Your account is not authorized to access this service.')}{'\n'}{$i18n.t('If you used Globus to sign in, please')}</span>
+						<a href="https://auth.globus.org/v2/web/logout" target="_blank" rel="noopener" class="underline text-blue-600 dark:text-blue-400 mx-1">
+							{$i18n.t('sign out from Globus')}
+						</a>
+						<span>{$i18n.t('and sign in again with the correct organization.')}</span>
 					</div>
 
 					<div class=" mt-6 mx-auto relative group w-fit">
