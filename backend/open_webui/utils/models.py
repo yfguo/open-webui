@@ -34,8 +34,8 @@ log = logging.getLogger(__name__)
 log.setLevel(SRC_LOG_LEVELS["MAIN"])
 
 
-async def fetch_ollama_models(request: Request, user: UserModel = None, force_update: bool = False):
-    raw_ollama_models = await ollama.get_all_models(request, user=user, force_update=force_update)
+async def fetch_ollama_models(request: Request, user: UserModel = None):
+    raw_ollama_models = await ollama.get_all_models(request, user=user)
     return [
         {
             "id": model["model"],
@@ -51,19 +51,19 @@ async def fetch_ollama_models(request: Request, user: UserModel = None, force_up
     ]
 
 
-async def fetch_openai_models(request: Request, user: UserModel = None, force_update: bool = False):
-    openai_response = await openai.get_all_models(request, user=user, force_update=force_update)
+async def fetch_openai_models(request: Request, user: UserModel = None):
+    openai_response = await openai.get_all_models(request, user=user)
     return openai_response["data"]
 
 
-async def get_all_base_models(request: Request, user: UserModel = None, force_update: bool = False):
+async def get_all_base_models(request: Request, user: UserModel = None):
     openai_task = (
-        fetch_openai_models(request, user, force_update)
+        fetch_openai_models(request, user)
         if request.app.state.config.ENABLE_OPENAI_API
         else asyncio.sleep(0, result=[])
     )
     ollama_task = (
-        fetch_ollama_models(request, user, force_update)
+        fetch_ollama_models(request, user)
         if request.app.state.config.ENABLE_OLLAMA_API
         else asyncio.sleep(0, result=[])
     )
@@ -76,8 +76,8 @@ async def get_all_base_models(request: Request, user: UserModel = None, force_up
     return function_models + openai_models + ollama_models
 
 
-async def get_all_models(request, user: UserModel = None, force_update: bool = False):
-    models = await get_all_base_models(request, user=user, force_update=force_update)
+async def get_all_models(request, user: UserModel = None):
+    models = await get_all_base_models(request, user=user)
 
     # If there are no models, return an empty list
     if len(models) == 0:

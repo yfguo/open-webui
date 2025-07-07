@@ -288,7 +288,7 @@ async def speech(request: Request, user=Depends(get_verified_user)):
         raise HTTPException(status_code=401, detail=ERROR_MESSAGES.OPENAI_NOT_FOUND)
 
 
-async def get_all_models_responses(request: Request, user: UserModel, force_update: bool) -> list:
+async def get_all_models_responses(request: Request, user: UserModel) -> list:
     global model_status_last_update
     global model_status_ttl
     global live_models
@@ -384,7 +384,7 @@ async def get_all_models_responses(request: Request, user: UserModel, force_upda
 
         if enable:
             if len(model_ids) > 0:
-                if force_update or time.time() - model_status_last_update > model_status_ttl:
+                if time.time() - model_status_last_update > model_status_ttl:
                     request_tasks.append(
                         send_get_request(
                             f"https://data-portal-dev.cels.anl.gov/resource_server/sophia/jobs",
@@ -466,13 +466,13 @@ async def get_filtered_models(models, user):
 
 
 @cached(ttl=1)
-async def get_all_models(request: Request, user: UserModel, force_update: bool = False) -> dict[str, list]:
+async def get_all_models(request: Request, user: UserModel) -> dict[str, list]:
     log.info("get_all_models()")
 
     if not request.app.state.config.ENABLE_OPENAI_API:
         return {"data": []}
 
-    responses = await get_all_models_responses(request, user=user, force_update=force_update)
+    responses = await get_all_models_responses(request, user=user)
 
     def extract_data(response):
         if response and "data" in response:
