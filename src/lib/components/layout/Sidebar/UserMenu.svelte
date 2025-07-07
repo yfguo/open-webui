@@ -189,10 +189,10 @@
 			<button
 				class="flex rounded-md py-1.5 px-3 w-full hover:bg-gray-50 dark:hover:bg-gray-800 transition"
 				on:click={async () => {
-					const revoke_ret = await userRevokeToken(localStorage.token);
-					console.log(revoke_ret)
+					// const revoke_ret = await userRevokeToken(localStorage.token);
+					// console.log('revoke token', revoke_ret)
 					const signout_ret = await userOauthSignOut(localStorage.token);
-					console.log(signout_ret)
+					console.log('oauth signout', signout_ret)
 					const res = await userSignOut();
 					user.set(null);
 					localStorage.removeItem('token');
