@@ -8,16 +8,10 @@ import { toast } from 'svelte-sonner';
 export const getModels = async (
 	token: string = '',
 	connections: object | null = null,
-	base: boolean = false,
-	force_update: boolean = false
+	base: boolean = false
 ) => {
 	let error = null;
-	const url = new URL(`${WEBUI_BASE_URL}/api/models${base ? '/base' : ''}`);
-	if (force_update) {
-		url.searchParams.set('force_update', 'true');
-	}
-
-	const res = await fetch(url.toString(), {
+	const res = await fetch(`${WEBUI_BASE_URL}/api/models${base ? '/base' : ''}`, {
 		method: 'GET',
 		headers: {
 			Accept: 'application/json',
