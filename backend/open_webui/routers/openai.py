@@ -130,6 +130,7 @@ def openai_o_series_handler(payload):
 model_status_last_update = 0
 model_status_ttl = 120
 live_models = []
+starting_models = []
 queued_models = []
 
 ##########################################
@@ -292,6 +293,7 @@ async def get_all_models_responses(request: Request, user: UserModel) -> list:
     global model_status_last_update
     global model_status_ttl
     global live_models
+    global starting_models
     global queued_models
 
     if not request.app.state.config.ENABLE_OPENAI_API:
@@ -407,12 +409,16 @@ async def get_all_models_responses(request: Request, user: UserModel) -> list:
         if status and isinstance(status, dict):
             model_status_last_update = time.time()
             for model in status["running"]:
-                live_models.extend(model["Models"].split(","))
+                if model["Model Status"] == "running":
+                    live_models.extend(model["Models"].split(","))
+                elif model["Model Status"] == "starting":
+                    starting_models.extend(model["Models"].split(","))
 
             for model in status["queued"]:
                 queued_models.extend(model["Models"].split(","))
 
     log.debug(f"get_all_models:live_models() {live_models}")
+    log.debug(f"get_all_models:starting_models() {starting_models}")
     log.debug(f"get_all_models:queue_models() {queued_models}")
 
     for idx, response in enumerate(responses):
@@ -434,6 +440,8 @@ async def get_all_models_responses(request: Request, user: UserModel) -> list:
             ):
                 if model["id"] in live_models:
                     model["status"] = "live"
+                elif model["id"] in starting_models:
+                    model["status"] = "starting"
                 elif model["id"] in queued_models:
                     model["status"] = "queued"
                 else:

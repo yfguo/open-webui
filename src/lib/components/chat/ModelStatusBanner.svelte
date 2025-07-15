@@ -16,7 +16,7 @@
     models: models.map(m => ({ id: m.id, name: m.name, status: m.status }))
   });
 
-  // Find all selected models that are queued or offline
+  // Find all selected models that are starting, queued or offline
   $: warningModels = selectedModels
     .map((id) => {
       const model = models.find((m) => m.id === id);
@@ -24,7 +24,7 @@
       return model;
     })
     .filter((m) => {
-      const isWarning = m && (m.status === 'queued' || m.status === 'offline');
+      const isWarning = m && (m.status === 'starting' || m.status === 'queued' || m.status === 'offline');
       console.log(`ModelStatusBanner - Model ${m?.id} status check:`, {
         model: m?.id,
         status: m?.status,
@@ -45,12 +45,15 @@
 
   function getStatusText(status: string) {
     // These keys should be added to translation files:
+    // 'is starting and will be live soon'
     // 'is currently queued and may take time to respond'
     // 'is offline, will be queued when used'
     if (status === 'queued') {
       return i18n?.t?.('is currently queued and may take time to respond', { defaultValue: 'is currently queued and may take time to respond' }) || 'is currently queued and may take time to respond';
     } else if (status === 'offline') {
       return i18n?.t?.('is offline, will be queued when used', { defaultValue: 'is offline, will be queued when used' }) || 'is offline, will be queued when used';
+    } else if (status === 'starting') {
+      return i18n?.t?.('is starting, will be live soon', { defaultValue: 'is starting, will be live soon' }) || 'is starting, will be live soon';
     }
     return '';
   }

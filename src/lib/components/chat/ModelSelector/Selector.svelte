@@ -462,6 +462,19 @@
 							</button>
 
 							<button
+								class="min-w-fit outline-none p-1.5 {selectedStatus === 'starting'
+									? ''
+									: 'text-gray-300 dark:text-gray-600 hover:text-gray-700 dark:hover:text-white'} transition capitalize"
+								on:click={() => {
+									selectedTag = '';
+									selectedConnectionType = '';
+									selectedStatus = 'starting';
+								}}
+							>
+								{$i18n.t('Starting')}
+							</button>
+
+							<button
 								class="min-w-fit outline-none p-1.5 {selectedStatus === 'queued'
 									? ''
 									: 'text-gray-300 dark:text-gray-600 hover:text-gray-700 dark:hover:text-white'} transition capitalize"
