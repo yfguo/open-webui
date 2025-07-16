@@ -998,21 +998,22 @@ async def generate_chat_completion(
                 ),
             )
         else:
-            print(payload)
             try:
                 response = await r.json()
             except Exception as e:
                 # log.error(e)
                 response = await r.text()
                 response = json.loads(response)
-            print(response)
+            log.debug(f"response: {r}")
             r.raise_for_status()
             return response
     except Exception as e:
         log.exception(e)
 
         detail = None
-        if isinstance(response, dict):
+        if e.status == 401:
+            detail = "You are either not allowed to access the service or your Globus token has expired. Please sign out and sign in again with an authorized identity provider."
+        elif isinstance(response, dict):
             if "error" in response:
                 detail = f"{response['error']['message'] if 'message' in response['error'] else response['error']}"
         elif isinstance(response, str):
