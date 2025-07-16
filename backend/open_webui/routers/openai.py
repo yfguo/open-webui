@@ -126,12 +126,84 @@ def openai_o_series_handler(payload):
     return payload
 
 
-# cache model status globally
-model_status_last_update = 0
-model_status_ttl = 120
-live_models = []
-starting_models = []
-queued_models = []
+class AGPTModelStatus:
+    def __init__(self, ttl=0):
+        self.session = None
+        self.live_models = []
+        self.starting_models = []
+        self.queued_models = []
+        self.last_update = 0
+        self.ttl = ttl
+        self._task = None
+
+    async def fetch(self, url, key=None, user: UserModel = None, timeout=None):
+        if self.session is None:
+            self.session = aiohttp.ClientSession(
+                trust_env=True,
+                timeout=aiohttp.ClientTimeout(total=AIOHTTP_CLIENT_TIMEOUT_MODEL_LIST)
+            )
+
+        if time.time() - self.last_update <= self.ttl:
+            log.debug(f"skip jobs query due to TTL")
+            return True
+
+        if self._task != None and not self._task.done():
+            log.debug(f"query pending")
+            return True
+
+        async def do_fetch(self, url, key=None):
+            try:
+                async with self.session.get(
+                    url,
+                    headers={
+                        **({"Authorization": f"Bearer {key}"} if key else {}),
+                        },
+                    ssl=AIOHTTP_CLIENT_SESSION_SSL
+                ) as response:
+                    if response.ok:
+                        self.last_update = time.time()
+                        status_ret = json.loads(await response.text())
+                        log.debug(f"AGPTModelStatus: model_status {status_ret}")
+                        self.live_models = []
+                        self.starting_models = []
+                        self.queued_models = []
+
+                        for model in status_ret["running"]:
+                            if model["Model Status"] == "running":
+                                self.live_models.extend(model["Models"].split(","))
+                            elif model["Model Status"] == "starting":
+                                self.starting_models.extend(model["Models"].split(","))
+
+                        for model in status_ret["queued"]:
+                            self.queued_models.extend(model["Models"].split(","))
+
+                        log.debug(f"model_status_tracker:live_models() {self.live_models}")
+                        log.debug(f"model_status_tracker:starting_models() {self.starting_models}")
+                        log.debug(f"model_status_tracker:queue_models() {self.queued_models}")
+                        return True
+                    else:
+                        log.warning(f"agpt_fetch_model_status request error: {response.status} {url} key={key} user={user}")
+                        return False
+            except Exception as e:
+                log.warning(f"connection error: {e}")
+                return False
+
+        self._task = asyncio.create_task(do_fetch(self, url, key))
+
+        try:
+            return await asyncio.wait_for(self._task, timeout=timeout)
+        except asyncio.TimeoutError:
+            log.debug(f"fetch returning, but still fetching {url}")
+            return True
+
+    def is_live(self, model_id):
+        return model_id in self.live_models
+
+    def is_starting(self, model_id):
+        return model_id in self.starting_models
+
+    def is_queued(self, model_id):
+        return model_id in self.queued_models
 
 ##########################################
 #
@@ -140,7 +212,7 @@ queued_models = []
 ##########################################
 
 router = APIRouter()
-
+model_status_tracker = AGPTModelStatus(ttl=1)
 
 @router.get("/config")
 async def get_config(request: Request, user=Depends(get_admin_user)):
@@ -290,11 +362,7 @@ async def speech(request: Request, user=Depends(get_verified_user)):
 
 
 async def get_all_models_responses(request: Request, user: UserModel) -> list:
-    global model_status_last_update
-    global model_status_ttl
-    global live_models
-    global starting_models
-    global queued_models
+    global model_status_tracker
 
     if not request.app.state.config.ENABLE_OPENAI_API:
         return []
@@ -386,40 +454,16 @@ async def get_all_models_responses(request: Request, user: UserModel) -> list:
 
         if enable:
             if len(model_ids) > 0:
-                if time.time() - model_status_last_update > model_status_ttl:
-                    request_tasks.append(
-                        send_get_request(
-                            f"https://data-portal-dev.cels.anl.gov/resource_server/sophia/jobs",
-                            user.api_key if user.api_key else request.app.state.config.OPENAI_API_KEYS[idx],
-                            user=user,
-                        )
-                    )
-                else:
-                    request_tasks.append(asyncio.ensure_future(asyncio.sleep(0, None)))
-                    log.debug("skip jobs query due to TTL")
+                request_tasks.append(model_status_tracker.fetch(
+                    f"https://data-portal-dev.cels.anl.gov/resource_server/sophia/jobs",
+                    user.api_key if user.api_key else request.app.state.config.OPENAI_API_KEYS[1],
+                    user=user,
+                    timeout=5
+                ))
         else:
             request_tasks.append(asyncio.ensure_future(asyncio.sleep(0, None)))
 
     model_status = await asyncio.gather(*request_tasks)
-    log.debug(f"get_all_models: model_status {model_status}")
-
-
-
-    for idx, status in enumerate(model_status):
-        if status and isinstance(status, dict):
-            model_status_last_update = time.time()
-            for model in status["running"]:
-                if model["Model Status"] == "running":
-                    live_models.extend(model["Models"].split(","))
-                elif model["Model Status"] == "starting":
-                    starting_models.extend(model["Models"].split(","))
-
-            for model in status["queued"]:
-                queued_models.extend(model["Models"].split(","))
-
-    log.debug(f"get_all_models:live_models() {live_models}")
-    log.debug(f"get_all_models:starting_models() {starting_models}")
-    log.debug(f"get_all_models:queue_models() {queued_models}")
 
     for idx, response in enumerate(responses):
         if response:
@@ -438,11 +482,11 @@ async def get_all_models_responses(request: Request, user: UserModel) -> list:
             for model in (
                 response if isinstance(response, list) else response.get("data", [])
             ):
-                if model["id"] in live_models:
+                if model_status_tracker.is_live(model["id"]):
                     model["status"] = "live"
-                elif model["id"] in starting_models:
+                elif model_status_tracker.is_starting(model["id"]):
                     model["status"] = "starting"
-                elif model["id"] in queued_models:
+                elif model_status_tracker.is_queued(model["id"]):
                     model["status"] = "queued"
                 else:
                     model["status"] = "offline"
