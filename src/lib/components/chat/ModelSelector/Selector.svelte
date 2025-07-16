@@ -121,6 +121,8 @@
 							return true;
 						} else if (selectedStatus === 'live') {
 							return item.model?.status === 'live';
+						} else if (selectedStatus === 'starting') {
+							return item.model?.status === 'starting';
 						} else if (selectedStatus === 'queued') {
 							return item.model?.status === 'queued';
 						} else if (selectedStatus === 'offline') {
@@ -150,6 +152,8 @@
 							return true;
 						} else if (selectedStatus === 'live') {
 							return item.model?.status === 'live';
+						} else if (selectedStatus === 'starting') {
+							return item.model?.status === 'starting';
 						} else if (selectedStatus === 'queued') {
 							return item.model?.status === 'queued';
 						} else if (selectedStatus === 'offline') {
