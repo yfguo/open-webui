@@ -55,7 +55,7 @@
 	</title>
 </svelte:head>
 
-<div class="w-full h-screen max-h-[100dvh] text-white relative">
+<div class="w-full h-screen max-h-[100dvh] relative">
 	<div class="w-full h-full absolute top-0 left-0 bg-white dark:bg-black"></div>
 
 	<div class="w-full absolute top-0 left-0 right-0 h-8 drag-region" />
@@ -81,14 +81,14 @@
 			<div class="m-auto pb-10 flex flex-col justify-center">
 				<div class="max-w-md">
 					<div
-						class="text-center dark:text-white text-2xl font-medium z-50"
+						class="text-center text-2xl font-medium z-50 text-black dark:text-white"
 						style="white-space: pre-wrap;"
 					>
 						{$i18n.t('Account Not Authorized')}<br />
 						<!-- {$i18n.t('Contact Admin for WebUI Access')} -->
 					</div>
 
-					<div class="mt-4 text-center text-sm dark:text-gray-200 w-full">
+					<div class="mt-4 text-center text-sm text-gray-700 dark:text-gray-200 w-full">
 						<span>{$i18n.t('Your account is not authorized to access this service.')}{'\n'}{$i18n.t('If you used Globus to sign in, please')}</span>
 						<a href="https://auth.globus.org/v2/web/logout" target="_blank" rel="noopener" class="underline text-blue-600 dark:text-blue-400 mx-1">
 							{$i18n.t('sign out from Globus')}
@@ -98,7 +98,7 @@
 
 					<div class=" mt-6 mx-auto relative group w-fit">
 						<button
-							class="relative z-20 flex px-5 py-2 rounded-full bg-white border border-gray-100 dark:border-none hover:bg-gray-100 text-gray-700 transition font-medium text-sm"
+							class="relative z-20 flex px-5 py-2 rounded-full bg-white dark:bg-gray-800 border border-gray-100 dark:border-none hover:bg-gray-100 dark:hover:bg-gray-700 text-black dark:text-white transition font-medium text-sm"
 							on:click={async () => {
 								const res = await userSignOut();
 								user.set(null);
