@@ -446,6 +446,10 @@ input[type='number'] {
 	@apply bg-white dark:bg-gray-900 dark:border-gray-850 text-xs;
 }
 
+:root {
+  --banner-height: 60px;
+}
+
 .global-banner {
   width: 100%;
   background: #003B42;
@@ -455,9 +459,22 @@ input[type='number'] {
   justify-content: space-between;
   font-family: 'Metropolis', 'Inter', Arial, sans-serif;
   padding: 0 2rem;
-  min-height: 60px;
+  min-height: var(--banner-height);
+  height: var(--banner-height);
   box-sizing: border-box;
   z-index: 1000;
+}
+
+.h-main-content-area {
+  height: calc(100vh - var(--banner-height));
+}
+
+.min-h-main-content-area {
+  min-height: calc(100vh - var(--banner-height));
+}
+
+.max-h-main-content-area {
+  max-height: calc(100dvh - var(--banner-height));
 }
 
 .banner-left {
