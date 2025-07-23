@@ -146,12 +146,12 @@
 			>
 				<div
 					class=" {$showCallOverlay || $showOverview || $showArtifacts
-						? ' h-screen  w-full'
+						? ' h-main-content-area  w-full'
 						: 'px-6 py-4'} h-full"
 				>
 					{#if $showCallOverlay}
 						<div
-							class=" h-full max-h-[100dvh] bg-white text-gray-700 dark:bg-black dark:text-gray-300 flex justify-center"
+							class=" h-full max-h-main-content-area bg-white text-gray-700 dark:bg-black dark:text-gray-300 flex justify-center"
 						>
 							<CallOverlay
 								bind:files

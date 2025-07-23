@@ -1,3 +1,6 @@
+/* Metropolis font (if you have it locally, otherwise use Inter) */
+@import url('https://fonts.googleapis.com/css2?family=Metropolis:wght@400;700&display=swap');
+
 @reference "./tailwind.css";
 
 @font-face {
@@ -441,4 +444,78 @@ input[type='number'] {
 
 .tiptap tr {
 	@apply bg-white dark:bg-gray-900 dark:border-gray-850 text-xs;
+}
+
+:root {
+  --banner-height: 60px;
+}
+
+.global-banner {
+  width: 100%;
+  background: #003B42;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: 'Metropolis', 'Inter', Arial, sans-serif;
+  padding: 0 2rem;
+  min-height: var(--banner-height);
+  height: var(--banner-height);
+  box-sizing: border-box;
+  z-index: 1000;
+}
+
+.h-main-content-area {
+  height: calc(100vh - var(--banner-height));
+}
+
+.min-h-main-content-area {
+  min-height: calc(100vh - var(--banner-height));
+}
+
+.max-h-main-content-area {
+  max-height: calc(100dvh - var(--banner-height));
+}
+
+.banner-left {
+  display: flex;
+  align-items: center;
+}
+
+.hamburger {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin-right: 1.5rem;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+}
+.hamburger div {
+  height: 4px;
+  background: #fff;
+  margin: 4px 0;
+  border-radius: 2px;
+  width: 100%;
+}
+
+.banner-logo {
+  height: 40px;
+  margin-right: 1rem;
+}
+
+.banner-right {
+  margin-left: auto;
+  font-size: 1rem;
+  font-weight: 400;
+  opacity: 0.85;
+}
+
+@media (max-width: 600px) {
+  .banner-right {
+    font-size: 0.75rem;
+  }
+  .banner-logo {
+    margin-right: 10rem;
+  }
 }

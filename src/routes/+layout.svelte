@@ -669,9 +669,18 @@
 	<link rel="stylesheet" type="text/css" href="/themes/rosepine-dawn.css" /> -->
 </svelte:head>
 
+<div class="global-banner">
+  <div class="banner-left">
+    <img src="/static/alcf-logo-h.png" alt="Argonne ALCF Logo" class="banner-logo" />
+  </div>
+  <div class="banner-right">
+    Powered by <a href="https://github.com/open-webui/open-webui" target="_blank" rel="noopener noreferrer">Open WebUI</a> and <a href="https://www.globus.org/" target="_blank" rel="noopener noreferrer">Globus</a>
+  </div>
+</div>
+
 {#if loaded}
 	{#if $isApp}
-		<div class="flex flex-row h-screen">
+		<div class="flex flex-row h-main-content-area">
 			<AppSidebar />
 
 			<div class="w-full flex-1 max-w-[calc(100%-4.5rem)]">
