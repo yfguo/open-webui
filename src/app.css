@@ -482,23 +482,6 @@ input[type='number'] {
   align-items: center;
 }
 
-.hamburger {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  margin-right: 1.5rem;
-  cursor: pointer;
-  width: 32px;
-  height: 32px;
-}
-.hamburger div {
-  height: 4px;
-  background: #fff;
-  margin: 4px 0;
-  border-radius: 2px;
-  width: 100%;
-}
-
 .banner-logo {
   height: 40px;
   margin-right: 1rem;
