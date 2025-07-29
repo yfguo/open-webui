@@ -2,7 +2,8 @@
 	import { onMount, getContext, tick } from 'svelte';
 	import { models, tools, functions, knowledge as knowledgeCollections, user } from '$lib/stores';
 
-	import AdvancedParams from '$lib/components/chat/Settings/Advanced/AdvancedParams.svelte';
+	//import AdvancedParams from '$lib/components/chat/Settings/Advanced/AdvancedParams.svelte';
+	import AdvancedParams from '$lib/components/chat/Settings/Advanced/AdvancedParamsInferenceService.svelte';
 	import Tags from '$lib/components/common/Tags.svelte';
 	import Knowledge from '$lib/components/workspace/Models/Knowledge.svelte';
 	import ToolsSelector from '$lib/components/workspace/Models/ToolsSelector.svelte';
