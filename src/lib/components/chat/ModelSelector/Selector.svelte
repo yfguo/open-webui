@@ -521,20 +521,20 @@
 								</button>
 							{/if}
 
-							{#if items.find((item) => item.model?.connection_type === 'local')}
-								<button
-									class="min-w-fit outline-none p-1.5 {selectedConnectionType === 'local'
-										? ''
-										: 'text-gray-300 dark:text-gray-600 hover:text-gray-700 dark:hover:text-white'} transition capitalize"
-									on:click={() => {
-										selectedTag = '';
-										selectedConnectionType = 'local';
-										selectedStatus = '';
-									}}
-								>
-									{$i18n.t('Local')}
-								</button>
-							{/if}
+							<!-- {#if items.find((item) => item.model?.connection_type === 'local')} -->
+							<!-- 	<button -->
+							<!-- 		class="min-w-fit outline-none p-1.5 {selectedConnectionType === 'local' -->
+							<!-- 			? '' -->
+							<!-- 			: 'text-gray-300 dark:text-gray-600 hover:text-gray-700 dark:hover:text-white'} transition capitalize" -->
+							<!-- 		on:click={() => { -->
+							<!-- 			selectedTag = ''; -->
+							<!-- 			selectedConnectionType = 'local'; -->
+							<!-- 			selectedStatus = ''; -->
+							<!-- 		}} -->
+							<!-- 	> -->
+							<!-- 		{$i18n.t('Local')} -->
+							<!-- 	</button> -->
+							<!-- {/if} -->
 
 							{#if items.find((item) => item.model?.connection_type === 'external')}
 								<button
