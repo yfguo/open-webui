@@ -14,18 +14,19 @@
 	export let custom = false;
 
 	const defaultParams = {
-        frequency_penalty: null,
-        logprobs: null,
-        max_completion_tokens: null,
-        modalities: null,
-        n: null,
-        presence_penalty: null,
-        reasoning_effort: null,
-        seed: null,
-        service_tier: null,
-        temperature: null,
-        top_logprobs: null,
-        top_p: null,
+		stream_response: null, // Set stream responses for this model individually
+		frequency_penalty: null,
+		logprobs: null,
+		max_completion_tokens: null,
+		modalities: null,
+		n: null,
+		presence_penalty: null,
+		reasoning_effort: null,
+		seed: null,
+		service_tier: null,
+		temperature: null,
+		top_logprobs: null,
+		top_p: null,
 	};
 
 	export let params = defaultParams;
@@ -34,6 +35,7 @@
 	}
 	
 	// State variables for info displays
+	let showStreamResponseInfo = false;
 	let showFrequencyPenaltyInfo = false;
 	let showLogprobsInfo = false;
 	let showMaxCompletionTokensInfo = false;
@@ -51,6 +53,53 @@
 
 <div class=" space-y-1 text-xs pb-safe-bottom">
 
+	<!-- stream responses -->
+	<div class=" py-0.5 w-full justify-between">
+		<div class="flex w-full justify-between">
+			<div class="flex items-center gap-1">
+				<div class=" self-center text-xs font-medium">
+					{'stream_response'}
+				</div>
+				<button
+					class="p-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+					type="button"
+					on:click={() => {
+						showStreamResponseInfo = !showStreamResponseInfo;
+					}}
+				>
+					<Info className="size-3" />
+				</button>
+			</div>
+
+			<button
+				class="p-1 px-3 text-xs flex rounded-sm transition shrink-0 outline-hidden"
+				type="button"
+				on:click={() => {
+					params.stream_response =
+						(params?.stream_response ?? null) === null
+							? true
+							: params.stream_response
+								? false
+								: null;
+				}}
+			>
+				{#if params.stream_response === true}
+					<span class="ml-2 self-center">{$i18n.t('On')}</span>
+				{:else if params.stream_response === false}
+					<span class="ml-2 self-center">{$i18n.t('Off')}</span>
+				{:else}
+					<span class="ml-2 self-center">{$i18n.t('Default')}</span>
+				{/if}
+			</button>
+		</div>
+		
+		{#if showStreamResponseInfo}
+			<div class="mt-1 p-2 text-xs bg-muted rounded-md">
+				{$i18n.t('When enabled, the model will respond to each chat message in real-time, generating a response as soon as the user sends a message. This mode is useful for live chat applications, but may impact performance on slower hardware.')}
+			</div>
+		{/if}
+
+	</div>
     <!-- frequency_penalty -->
     <div class=" py-0.5 w-full justify-between">
 		<div class="flex w-full justify-between">
