@@ -14,7 +14,7 @@
 
 	const defaultParams = {
 		// Advanced
-		//stream_response: null, // Set stream responses for this model individually
+		stream_response: null, // Set stream responses for this model individually
 		function_calling: null,
 		seed: null,
 		stop: null,
@@ -54,7 +54,6 @@
 <div class=" space-y-1 text-xs pb-safe-bottom">
 
 	<!-- Stream Chat Response - stream_response -->
-	<!--
 	<div>
 		<Tooltip
 			content={$i18n.t(
@@ -90,7 +89,6 @@
 			</div>
 		</Tooltip>
 	</div>
-	-->
 
 	<div>
 		<Tooltip
