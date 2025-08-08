@@ -9,7 +9,7 @@ import time
 import aiohttp
 from aiocache import cached
 import requests
-
+from urllib.parse import quote
 
 from fastapi import Depends, FastAPI, HTTPException, Request, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
@@ -22,6 +22,7 @@ from open_webui.config import (
     CACHE_DIR,
 )
 from open_webui.env import (
+    MODELS_CACHE_TTL,
     AIOHTTP_CLIENT_SESSION_SSL,
     AIOHTTP_CLIENT_TIMEOUT,
     AIOHTTP_CLIENT_TIMEOUT_MODEL_LIST,
@@ -67,7 +68,7 @@ async def send_get_request(url, key=None, user: UserModel = None):
                     **({"Authorization": f"Bearer {key}"} if key else {}),
                     **(
                         {
-                            "X-OpenWebUI-User-Name": user.name,
+                            "X-OpenWebUI-User-Name": quote(user.name, safe=" "),
                             "X-OpenWebUI-User-Id": user.id,
                             "X-OpenWebUI-User-Email": user.email,
                             "X-OpenWebUI-User-Role": user.role,
@@ -315,7 +316,7 @@ async def speech(request: Request, user=Depends(get_verified_user)):
                     ),
                     **(
                         {
-                            "X-OpenWebUI-User-Name": user.name,
+                            "X-OpenWebUI-User-Name": quote(user.name, safe=" "),
                             "X-OpenWebUI-User-Id": user.id,
                             "X-OpenWebUI-User-Email": user.email,
                             "X-OpenWebUI-User-Role": user.role,
@@ -517,7 +518,7 @@ async def get_filtered_models(models, user):
     return filtered_models
 
 
-@cached(ttl=1)
+@cached(ttl=MODELS_CACHE_TTL)
 async def get_all_models(request: Request, user: UserModel) -> dict[str, list]:
     log.info("get_all_models()")
 
@@ -590,7 +591,6 @@ async def get_models(
 
     if url_idx is None:
         models = await get_all_models(request, user=user)
-    # FIXME: disable per model query as AGPT endpoint does not support it.
     # else:
     #     url = request.app.state.config.OPENAI_API_BASE_URLS[url_idx]
     #     key = request.app.state.config.OPENAI_API_KEYS[url_idx]
@@ -610,7 +610,7 @@ async def get_models(
     #                 "Content-Type": "application/json",
     #                 **(
     #                     {
-    #                         "X-OpenWebUI-User-Name": user.name,
+    #                         "X-OpenWebUI-User-Name": quote(user.name, safe=" "),
     #                         "X-OpenWebUI-User-Id": user.id,
     #                         "X-OpenWebUI-User-Email": user.email,
     #                         "X-OpenWebUI-User-Role": user.role,
@@ -705,7 +705,7 @@ async def verify_connection(
                 "Content-Type": "application/json",
                 **(
                     {
-                        "X-OpenWebUI-User-Name": user.name,
+                        "X-OpenWebUI-User-Name": quote(user.name, safe=" "),
                         "X-OpenWebUI-User-Id": user.id,
                         "X-OpenWebUI-User-Email": user.email,
                         "X-OpenWebUI-User-Role": user.role,
@@ -765,13 +765,7 @@ async def verify_connection(
             raise HTTPException(status_code=500, detail=error_detail)
 
 
-def convert_to_azure_payload(
-    url,
-    payload: dict,
-):
-    model = payload.get("model", "")
-
-    # Filter allowed parameters based on Azure OpenAI API
+def get_azure_allowed_params(api_version: str) -> set[str]:
     allowed_params = {
         "messages",
         "temperature",
@@ -800,6 +794,23 @@ def convert_to_azure_payload(
         "seed",
         "max_completion_tokens",
     }
+
+    try:
+        if api_version >= "2024-09-01-preview":
+            allowed_params.add("stream_options")
+    except ValueError:
+        log.debug(
+            f"Invalid API version {api_version} for Azure OpenAI. Defaulting to allowed parameters."
+        )
+
+    return allowed_params
+
+
+def convert_to_azure_payload(url, payload: dict, api_version: str):
+    model = payload.get("model", "")
+
+    # Filter allowed parameters based on Azure OpenAI API
+    allowed_params = get_azure_allowed_params(api_version)
 
     # Special handling for o-series models
     if model.startswith("o") and model.endswith("-mini"):
@@ -942,10 +953,15 @@ async def generate_chat_completion(
         ),
         **(
             {
-                "X-OpenWebUI-User-Name": user.name,
+                "X-OpenWebUI-User-Name": quote(user.name, safe=" "),
                 "X-OpenWebUI-User-Id": user.id,
                 "X-OpenWebUI-User-Email": user.email,
                 "X-OpenWebUI-User-Role": user.role,
+                **(
+                    {"X-OpenWebUI-Chat-Id": metadata.get("chat_id")}
+                    if metadata and metadata.get("chat_id")
+                    else {}
+                ),
             }
             if ENABLE_FORWARD_USER_INFO_HEADERS
             else {}
@@ -953,8 +969,8 @@ async def generate_chat_completion(
     }
 
     if api_config.get("azure", False):
-        request_url, payload = convert_to_azure_payload(url, payload)
-        api_version = api_config.get("api_version", "") or "2023-03-15-preview"
+        api_version = api_config.get("api_version", "2023-03-15-preview")
+        request_url, payload = convert_to_azure_payload(url, payload, api_version)
         headers["api-key"] = key
         headers["api-version"] = api_version
         request_url = f"{request_url}/chat/completions?api-version={api_version}"
@@ -1024,10 +1040,8 @@ async def generate_chat_completion(
             detail=detail if detail else "Open WebUI: Server Connection Error",
         )
     finally:
-        if not streaming and session:
-            if r:
-                r.close()
-            await session.close()
+        if not streaming:
+            await cleanup_response(r, session)
 
 
 async def embeddings(request: Request, form_data: dict, user):
@@ -1069,7 +1083,7 @@ async def embeddings(request: Request, form_data: dict, user):
                 "Content-Type": "application/json",
                 **(
                     {
-                        "X-OpenWebUI-User-Name": user.name,
+                        "X-OpenWebUI-User-Name": quote(user.name, safe=" "),
                         "X-OpenWebUI-User-Id": user.id,
                         "X-OpenWebUI-User-Email": user.email,
                         "X-OpenWebUI-User-Role": user.role,
@@ -1108,10 +1122,8 @@ async def embeddings(request: Request, form_data: dict, user):
             detail=detail if detail else "Open WebUI: Server Connection Error",
         )
     finally:
-        if not streaming and session:
-            if r:
-                r.close()
-            await session.close()
+        if not streaming:
+            await cleanup_response(r, session)
 
 
 @router.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
@@ -1143,7 +1155,7 @@ async def proxy(path: str, request: Request, user=Depends(get_verified_user)):
             "Content-Type": "application/json",
             **(
                 {
-                    "X-OpenWebUI-User-Name": user.name,
+                    "X-OpenWebUI-User-Name": quote(user.name, safe=" "),
                     "X-OpenWebUI-User-Id": user.id,
                     "X-OpenWebUI-User-Email": user.email,
                     "X-OpenWebUI-User-Role": user.role,
@@ -1154,16 +1166,15 @@ async def proxy(path: str, request: Request, user=Depends(get_verified_user)):
         }
 
         if api_config.get("azure", False):
+            api_version = api_config.get("api_version", "2023-03-15-preview")
             headers["api-key"] = key
-            headers["api-version"] = (
-                api_config.get("api_version", "") or "2023-03-15-preview"
-            )
+            headers["api-version"] = api_version
 
             payload = json.loads(body)
-            url, payload = convert_to_azure_payload(url, payload)
+            url, payload = convert_to_azure_payload(url, payload, api_version)
             body = json.dumps(payload).encode()
 
-            request_url = f"{url}/{path}?api-version={api_config.get('api_version', '2023-03-15-preview')}"
+            request_url = f"{url}/{path}?api-version={api_version}"
         else:
             headers["Authorization"] = f"Bearer {key}"
             request_url = f"{url}/{path}"
@@ -1210,7 +1221,5 @@ async def proxy(path: str, request: Request, user=Depends(get_verified_user)):
             detail=detail if detail else "Open WebUI: Server Connection Error",
         )
     finally:
-        if not streaming and session:
-            if r:
-                r.close()
-            await session.close()
+        if not streaming:
+            await cleanup_response(r, session)

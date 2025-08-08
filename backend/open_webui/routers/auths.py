@@ -694,6 +694,7 @@ async def signout(request: Request, response: Response):
     if oauth_id_token:
         response.delete_cookie("oauth_id_token")
         response.delete_cookie("oauth_provider")
+    response.delete_cookie("oui-session")
 
 # [Edit] - Commenting below since Globus does hot have an end session endpoint
 #        - Full logout from Globus needs to be done by visiting https://app.globus.org/logout
@@ -701,7 +702,7 @@ async def signout(request: Request, response: Response):
     #     oauth_id_token = request.cookies.get("oauth_id_token")
     #     if oauth_id_token:
     #         try:
-    #             async with ClientSession() as session:
+    #             async with ClientSession(trust_env=True) as session:
     #                 async with session.get(OPENID_PROVIDER_URL.value) as resp:
     #                     if resp.status == 200:
     #                         openid_data = await resp.json()
@@ -713,7 +714,12 @@ async def signout(request: Request, response: Response):
     #                                 status_code=200,
     #                                 content={
     #                                     "status": True,
-    #                                     "redirect_url": f"{logout_url}?id_token_hint={oauth_id_token}",
+    #                                     "redirect_url": f"{logout_url}?id_token_hint={oauth_id_token}"
+    #                                     + (
+    #                                         f"&post_logout_redirect_uri={WEBUI_AUTH_SIGNOUT_REDIRECT_URL}"
+    #                                         if WEBUI_AUTH_SIGNOUT_REDIRECT_URL
+    #                                         else ""
+    #                                     ),
     #                                 },
     #                                 headers=response.headers,
     #                             )
@@ -724,8 +730,6 @@ async def signout(request: Request, response: Response):
     #                         )
     #         except Exception as e:
     #             log.error(f"OpenID signout error: {str(e)}")
-    #             log.error(f"oauth_id_token {oauth_id_token}")
-    #             log.error(f"OPENID_PROVIDER_URL {OPENID_PROVIDER_URL.value}")
     #             raise HTTPException(
     #                 status_code=500,
     #                 detail="Failed to sign out from the OpenID provider.",
