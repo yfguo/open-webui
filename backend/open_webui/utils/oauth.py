@@ -443,16 +443,6 @@ class OAuthManager:
         if not is_authorized:
             return RedirectResponse(url=urljoin(str(request.app.state.config.WEBUI_URL), 'unauthorized'), headers=response.headers)
 
-# FIXME: We should check if there is an access token for the API endpoint claim.
-#        But it always creates a access token albeit not usable with the API
-#        endpoint. So we can just check if the identity provider is corrent for
-#        now.
-        #if user_data["identity_provider_display_name"] not in [
-        #    "Argonne National Laboratory",
-        #    "Argonne LCF"
-        #    ]:
-        #    return RedirectResponse(url=urljoin(str(request.app.state.config.WEBUI_URL), 'unauthorized'), headers=response.headers)
-
         sub = user_data.get(OAUTH_PROVIDERS[provider].get("sub_claim", "sub"))
         if not sub:
             log.warning(f"OAuth callback failed, sub is missing: {user_data}")
