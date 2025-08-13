@@ -885,7 +885,7 @@ async def generate_chat_completion(
             )
 
     # avoid frequent query for models
-    # await get_all_models(request, user=user)
+    await get_all_models(request, user=user)
     model = request.app.state.OPENAI_MODELS.get(model_id)
     if model:
         idx = model["urlIdx"]
@@ -1029,6 +1029,9 @@ async def generate_chat_completion(
         detail = None
         if e.status == 401:
             detail = "You are either not allowed to access the service or your Globus token has expired. Please sign out and sign in again with an authorized identity provider."
+        if e.status == 408:
+            if "status" in model and model.get("status") != "live":
+                detail = "Message timeout before model becomes live. Please try again with a new chat with this model."
         elif isinstance(response, dict):
             if "error" in response:
                 detail = f"{response['error']['message'] if 'message' in response['error'] else response['error']}"
