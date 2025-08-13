@@ -348,7 +348,7 @@
 								</div>
 							</div>
 							<div class="mt-5">
-								{#if $config?.features.enable_login_form || $config?.features.enable_ldap}
+								<!-- {#if $config?.features.enable_login_form || $config?.features.enable_ldap} -->
 									{#if mode === 'ldap'}
 										<button
 											class="bg-gray-700/5 hover:bg-gray-700/10 dark:bg-gray-100/5 dark:hover:bg-gray-100/10 dark:text-gray-300 dark:hover:text-white transition w-full rounded-full font-medium text-sm py-2.5"
@@ -390,7 +390,7 @@
 											</div>
 										{/if}
 									{/if}
-								{/if}
+								<!-- {/if} -->
 							</div>
 						</form>
 
