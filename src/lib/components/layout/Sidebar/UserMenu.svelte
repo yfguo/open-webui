@@ -11,7 +11,7 @@
 	import { getUsage } from '$lib/apis';
 	import { userRevokeToken, userOauthSignOut, userSignOut } from '$lib/apis/auths';
 
-	import { showSettings, mobile, showSidebar, user } from '$lib/stores';
+	import { showSettings, mobile, showSidebar, showShortcuts, user } from '$lib/stores';
 
 	import Tooltip from '$lib/components/common/Tooltip.svelte';
 	import ArchiveBox from '$lib/components/icons/ArchiveBox.svelte';
@@ -30,8 +30,6 @@
 	export let role = '';
 	export let help = false;
 	export let className = 'max-w-[240px]';
-
-	let showShortcuts = false;
 
 	const dispatch = createEventDispatcher();
 
@@ -53,7 +51,7 @@
 	}
 </script>
 
-<ShortcutsModal bind:show={showShortcuts} />
+<ShortcutsModal bind:show={$showShortcuts} />
 
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <DropdownMenu.Root
@@ -74,7 +72,7 @@
 			align="start"
 			transition={(e) => fade(e, { duration: 100 })}
 		>
-			<button
+			<DropdownMenu.Item
 				class="flex rounded-md py-1.5 px-3 w-full hover:bg-gray-50 dark:hover:bg-gray-800 transition"
 				on:click={async () => {
 					await showSettings.set(true);
@@ -89,9 +87,9 @@
 					<Settings className="w-5 h-5" strokeWidth="1.5" />
 				</div>
 				<div class=" self-center truncate">{$i18n.t('Settings')}</div>
-			</button>
+			</DropdownMenu.Item>
 
-			<button
+			<DropdownMenu.Item
 				class="flex rounded-md py-1.5 px-3 w-full hover:bg-gray-50 dark:hover:bg-gray-800 transition"
 				on:click={() => {
 					dispatch('show', 'archived-chat');
@@ -106,42 +104,40 @@
 					<ArchiveBox className="size-5" strokeWidth="1.5" />
 				</div>
 				<div class=" self-center truncate">{$i18n.t('Archived Chats')}</div>
-			</button>
+			</DropdownMenu.Item>
 
 			{#if role === 'admin'}
-				<button
-					class="flex rounded-md py-1.5 px-3 w-full hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+				<DropdownMenu.Item
+					class="flex rounded-md py-1.5 px-3 w-full hover:bg-gray-50 dark:hover:bg-gray-800 transition select-none"
 					on:click={() => {
-						goto('/playground');
 						show = false;
-
 						if ($mobile) {
 							showSidebar.set(false);
 						}
+						goto('/playground');
 					}}
 				>
 					<div class=" self-center mr-3">
 						<Code className="size-5" strokeWidth="1.5" />
 					</div>
 					<div class=" self-center truncate">{$i18n.t('Playground')}</div>
-				</button>
+				</DropdownMenu.Item>
 
-				<button
-					class="flex rounded-md py-1.5 px-3 w-full hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+				<DropdownMenu.Item
+					class="flex rounded-md py-1.5 px-3 w-full hover:bg-gray-50 dark:hover:bg-gray-800 transition select-none"
 					on:click={() => {
-						goto('/admin');
 						show = false;
-
 						if ($mobile) {
 							showSidebar.set(false);
 						}
+						goto('/admin');
 					}}
 				>
 					<div class=" self-center mr-3">
 						<UserGroup className="w-5 h-5" strokeWidth="1.5" />
 					</div>
 					<div class=" self-center truncate">{$i18n.t('Admin Panel')}</div>
-				</button>
+				</DropdownMenu.Item>
 			{/if}
 
 			{#if help}
@@ -177,7 +173,7 @@
 					class="flex gap-2 items-center py-1.5 px-3 text-sm select-none w-full cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-md transition"
 					id="chat-share-button"
 					on:click={() => {
-						showShortcuts = !showShortcuts;
+						showShortcuts.set(!$showShortcuts);
 						show = false;
 					}}
 				>
@@ -188,7 +184,7 @@
 
 			<hr class=" border-gray-100 dark:border-gray-800 my-1 p-0" />
 
-			<button
+			<DropdownMenu.Item
 				class="flex rounded-md py-1.5 px-3 w-full hover:bg-gray-50 dark:hover:bg-gray-800 transition"
 				on:click={async () => {
 					// const revoke_ret = await userRevokeToken(localStorage.token);
@@ -207,7 +203,7 @@
 					<SignOut className="w-5 h-5" />
 				</div>
 				<div class=" self-center truncate">{$i18n.t('Sign Out')}</div>
-			</button>
+			</DropdownMenu.Item>
 
 			{#if usage}
 				{#if usage?.user_ids?.length > 0}

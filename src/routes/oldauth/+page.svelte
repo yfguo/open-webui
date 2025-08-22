@@ -279,78 +279,76 @@
 								{/if}
 							</div>
 
-							{#if $config?.features.enable_login_form || $config?.features.enable_ldap}
-								<div class="flex flex-col mt-4">
-									{#if mode === 'signup'}
-										<div class="mb-2">
-											<label for="name" class="text-sm font-medium text-left mb-1 block"
-												>{$i18n.t('Name')}</label
-											>
-											<input
-												bind:value={name}
-												type="text"
-												id="name"
-												class="my-0.5 w-full text-sm outline-hidden bg-transparent"
-												autocomplete="name"
-												placeholder={$i18n.t('Enter Your Full Name')}
-												required
-											/>
-										</div>
-									{/if}
-
-									{#if mode === 'ldap'}
-										<div class="mb-2">
-											<label for="username" class="text-sm font-medium text-left mb-1 block"
-												>{$i18n.t('Username')}</label
-											>
-											<input
-												bind:value={ldapUsername}
-												type="text"
-												class="my-0.5 w-full text-sm outline-hidden bg-transparent"
-												autocomplete="username"
-												name="username"
-												id="username"
-												placeholder={$i18n.t('Enter Your Username')}
-												required
-											/>
-										</div>
-									{:else}
-										<div class="mb-2">
-											<label for="email" class="text-sm font-medium text-left mb-1 block"
-												>{$i18n.t('Email')}</label
-											>
-											<input
-												bind:value={email}
-												type="email"
-												id="email"
-												class="my-0.5 w-full text-sm outline-hidden bg-transparent"
-												autocomplete="email"
-												name="email"
-												placeholder={$i18n.t('Enter Your Email')}
-												required
-											/>
-										</div>
-									{/if}
-
-									<div>
-										<label for="password" class="text-sm font-medium text-left mb-1 block"
-											>{$i18n.t('Password')}</label
+							<div class="flex flex-col mt-4">
+								{#if mode === 'signup'}
+									<div class="mb-2">
+										<label for="name" class="text-sm font-medium text-left mb-1 block"
+											>{$i18n.t('Name')}</label
 										>
 										<input
-											bind:value={password}
-											type="password"
-											id="password"
+											bind:value={name}
+											type="text"
+											id="name"
 											class="my-0.5 w-full text-sm outline-hidden bg-transparent"
-											placeholder={$i18n.t('Enter Your Password')}
-											autocomplete="current-password"
-											name="current-password"
+											autocomplete="name"
+											placeholder={$i18n.t('Enter Your Full Name')}
 											required
 										/>
 									</div>
+								{/if}
+
+								{#if mode === 'ldap'}
+									<div class="mb-2">
+										<label for="username" class="text-sm font-medium text-left mb-1 block"
+											>{$i18n.t('Username')}</label
+										>
+										<input
+											bind:value={ldapUsername}
+											type="text"
+											class="my-0.5 w-full text-sm outline-hidden bg-transparent"
+											autocomplete="username"
+											name="username"
+											id="username"
+											placeholder={$i18n.t('Enter Your Username')}
+											required
+										/>
+									</div>
+								{:else}
+									<div class="mb-2">
+										<label for="email" class="text-sm font-medium text-left mb-1 block"
+											>{$i18n.t('Email')}</label
+										>
+										<input
+											bind:value={email}
+											type="email"
+											id="email"
+											class="my-0.5 w-full text-sm outline-hidden bg-transparent"
+											autocomplete="email"
+											name="email"
+											placeholder={$i18n.t('Enter Your Email')}
+											required
+										/>
+									</div>
+								{/if}
+
+								<div>
+									<label for="password" class="text-sm font-medium text-left mb-1 block"
+										>{$i18n.t('Password')}</label
+									>
+									<input
+										bind:value={password}
+										type="password"
+										id="password"
+										class="my-0.5 w-full text-sm outline-hidden bg-transparent"
+										placeholder={$i18n.t('Enter Your Password')}
+										autocomplete="current-password"
+										name="current-password"
+										required
+									/>
 								</div>
-							{/if}
+							</div>
 							<div class="mt-5">
-								{#if $config?.features.enable_login_form || $config?.features.enable_ldap}
+								<!-- {#if $config?.features.enable_login_form || $config?.features.enable_ldap} -->
 									{#if mode === 'ldap'}
 										<button
 											class="bg-gray-700/5 hover:bg-gray-700/10 dark:bg-gray-100/5 dark:hover:bg-gray-100/10 dark:text-gray-300 dark:hover:text-white transition w-full rounded-full font-medium text-sm py-2.5"
@@ -392,7 +390,7 @@
 											</div>
 										{/if}
 									{/if}
-								{/if}
+								<!-- {/if} -->
 							</div>
 						</form>
 
