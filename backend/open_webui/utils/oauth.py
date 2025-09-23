@@ -1,11 +1,10 @@
-import globus_sdk
 import base64
 import logging
 import mimetypes
 import sys
 import uuid
 import json
-from urllib.parse import urljoin
+from urllib.parse import urljoin, quote
 
 import aiohttp
 from authlib.integrations.starlette_client import OAuth
@@ -424,10 +423,10 @@ class OAuthManager:
         # [IMPORTANT] user authorization layer
         # Introspect the user's access token and refuse access if needed
         atv_response = validate_access_token(user_access_token)
-        log.info(f"atv_response {atv_response}")
         if not atv_response.is_valid:
             log.info(f"User access token is not valid: {atv_response.error_message}")
-            return RedirectResponse(url=urljoin(str(request.app.state.config.WEBUI_URL), 'unauthorized'), headers=response.headers)
+            unauthorized_url = urljoin(str(request.app.state.config.WEBUI_URL), f'unauthorized?error={quote(atv_response.error_message)}')
+            return RedirectResponse(url=unauthorized_url, headers=response.headers)
 
         sub = user_data.get(OAUTH_PROVIDERS[provider].get("sub_claim", "sub"))
         if not sub:
