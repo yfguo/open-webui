@@ -99,7 +99,7 @@
 
 					<!-- [ADDITION] -->
 					{#if errorMessage}
-						<div class="mt-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+						<div class="mt-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-center">
 							<div class="text-sm text-red-700 dark:text-red-300 break-words">
 								{errorMessage}
 							</div>
