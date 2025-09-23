@@ -40,9 +40,6 @@ from open_webui.config import (
     WEBHOOK_URL,
     JWT_EXPIRES_IN,
     GLOBUS_INFERENCE_SERVICE_SCOPE,
-    GLOBUS_CLIENT_ID,
-    GLOBUS_CLIENT_SECRET,
-    GLOBUS_HIGH_ASSURANCE_POLICY,
     AppConfig,
 )
 from open_webui.constants import ERROR_MESSAGES, WEBHOOK_MESSAGES
@@ -56,6 +53,7 @@ from open_webui.env import (
 from open_webui.utils.misc import parse_duration
 from open_webui.utils.auth import get_password_hash, create_token
 from open_webui.utils.webhook import post_webhook
+from open_webui.utils.globus_auth import validate_access_token
 
 from open_webui.env import SRC_LOG_LEVELS, GLOBAL_LOG_LEVEL
 
@@ -422,25 +420,13 @@ class OAuthManager:
             log.warning(f"OAuth callback failed, user data is missing: {token}")
             raise HTTPException(400, detail=ERROR_MESSAGES.INVALID_CRED)
         
-        # Create a Globus confidential client using the app credentials
-        globus_client = globus_sdk.ConfidentialAppAuthClient(GLOBUS_CLIENT_ID, GLOBUS_CLIENT_SECRET)
-
-        # Introspect the access token with a Globus HA policy (API call to Globus Auth)
-        introspect_body = {
-            "token": user_access_token,
-            "authentication_policies": GLOBUS_HIGH_ASSURANCE_POLICY.value,
-            "include": "session_info,identity_set_detail"
-        }
-        introspection = globus_client.post("/v2/oauth2/token/introspect", data=introspect_body, encoding="form")
-
-        # Define whether the user is authorized to use the service (False if something goes wrong)
-        try:
-            is_authorized = introspection["policy_evaluations"][GLOBUS_HIGH_ASSURANCE_POLICY.value]["evaluation"]
-        except:
-            is_authorized = False
-
-        # Refuse access if user not authorized
-        if not is_authorized:
+        # [ADDITION] 
+        # [IMPORTANT] user authorization layer
+        # Introspect the user's access token and refuse access if needed
+        atv_response = validate_access_token(user_access_token)
+        log.info(f"atv_response {atv_response}")
+        if not atv_response.is_valid:
+            log.info(f"User access token is not valid: {atv_response.error_message}")
             return RedirectResponse(url=urljoin(str(request.app.state.config.WEBUI_URL), 'unauthorized'), headers=response.headers)
 
         sub = user_data.get(OAUTH_PROVIDERS[provider].get("sub_claim", "sub"))
