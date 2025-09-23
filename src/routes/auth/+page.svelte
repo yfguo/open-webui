@@ -224,9 +224,9 @@
 			class="fixed bg-transparent min-h-main-content-area w-full flex justify-center font-primary z-50 text-black dark:text-white"
 			id="auth-container"
 		>
-			<div class="w-full px-10 min-h-main-content-area flex flex-col text-center">
+			<div class="w-full sm:max-w-md px-10 min-h-main-content-area flex flex-col text-center">
 				{#if ($config?.features.auth_trusted_header ?? false) || $config?.features.auth === false}
-					<div class=" my-auto pb-10 w-full sm:max-w-md">
+					<div class=" my-auto pb-10 w-full">
 						<div
 							class="flex items-center justify-center gap-3 text-xl sm:text-2xl text-center font-semibold dark:text-gray-200"
 						>
@@ -241,7 +241,7 @@
 					</div>
 				{:else}
 					<div class="my-auto flex flex-col justify-center items-center">
-						<div class=" sm:max-w-md my-auto pb-10 w-full dark:text-gray-100">
+						<div class=" my-auto pb-10 w-full dark:text-gray-100">
 							<form
 								class=" flex flex-col justify-center"
 								on:submit={(e) => {
@@ -276,15 +276,15 @@
 
 							{#if Object.keys($config?.oauth?.providers ?? {}).length > 0}
 								<div class="inline-flex items-center justify-center w-full">
-									<hr class="w-32 h-px my-4 border-0 dark:bg-gray-100/10 bg-gray-700/10" />
+									<hr class="w-16 h-px my-4 border-0 dark:bg-gray-100/10 bg-gray-700/10" />
 									{#if $config?.features.enable_login_form || $config?.features.enable_ldap}
 										<span
-											class="px-3 text-sm font-medium text-gray-900 dark:text-white bg-transparent"
-											>{$i18n.t('or')}</span
+											class="px-3 text-sm font-medium text-gray-900 dark:text-white bg-transparent whitespace-nowrap"
+											>Please use Globus to sign in</span
 										>
 									{/if}
 
-									<hr class="w-32 h-px my-4 border-0 dark:bg-gray-100/10 bg-gray-700/10" />
+									<hr class="w-16 h-px my-4 border-0 dark:bg-gray-100/10 bg-gray-700/10" />
 								</div>
 								<div class="flex flex-col space-y-2">
 									{#if $config?.oauth?.providers?.google}
