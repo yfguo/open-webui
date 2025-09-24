@@ -4,7 +4,6 @@ import os
 import shutil
 import base64
 import redis
-import re
 
 from datetime import datetime
 from pathlib import Path
