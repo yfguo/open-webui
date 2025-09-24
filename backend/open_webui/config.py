@@ -367,30 +367,12 @@ GLOBUS_INFERENCE_SERVICE_SCOPE = PersistentConfig(
     os.environ.get("GLOBUS_INFERENCE_SERVICE_SCOPE", ""),
 )
 
-GLOBUS_HIGH_ASSURANCE_POLICY = PersistentConfig(
-    "GLOBUS_HIGH_ASSURANCE_POLICY",
-    "oauth.globus.globus_high_assurance_policy",
-    os.environ.get("GLOBUS_HIGH_ASSURANCE_POLICY", ""),
-)
-
-# List of authorized identity provider domains
-str_list = re.split(r"[\s;]+", os.environ.get("AUTHORIZED_IDP_DOMAINS", "").strip())
-AUTHORIZED_IDP_DOMAINS = [s for s in str_list if s]
-AUTHORIZED_IDP_DOMAINS = PersistentConfig(
-    "AUTHORIZED_IDP_DOMAINS",
-    "oauth.globus.authorized_idp_domains",
-    AUTHORIZED_IDP_DOMAINS,
-)
-
-# List of Globus Groups that authorized per identity provider
-# key = provider domain (e.g., anl.gov), value = group UUID
-AUTHORIZED_GROUPS_PER_IDP = json.loads(os.getenv("AUTHORIZED_GROUPS_PER_IDP", "{}"))
-for key, value in AUTHORIZED_GROUPS_PER_IDP.items():
-    AUTHORIZED_GROUPS_PER_IDP[key] = [v.strip() for v in value.split(",")]
-AUTHORIZED_GROUPS_PER_IDP = PersistentConfig(
-    "AUTHORIZED_GROUPS_PER_IDP",
-    "oauth.globus.authorized_groups_per_idp",
-    AUTHORIZED_GROUPS_PER_IDP,
+# [ADDITION]
+# URL to the Inference Gateway API whoami endpoint to authorize users
+GATEWAY_API_WHOAMI_URL = PersistentConfig(
+    "GATEWAY_API_WHOAMI_URL",
+    "oauth.globus.gateway_api_whoami_url",
+    os.environ.get("GATEWAY_API_WHOAMI_URL", "< not set >"),
 )
 
 MICROSOFT_CLIENT_ID = PersistentConfig(
@@ -633,10 +615,6 @@ def load_oauth_providers():
         }
 
     if GLOBUS_CLIENT_ID.value and GLOBUS_CLIENT_SECRET.value:
-
-        # Make sure there is a Globus policy in place when Globus OAuth is enabled
-        if len(GLOBUS_HIGH_ASSURANCE_POLICY.value) == 0:
-            raise Exception("GLOBUS_HIGH_ASSURANCE_POLICY must be set when using Globus OAuth.")
 
         def globus_oauth_register(client):
             client.register(
