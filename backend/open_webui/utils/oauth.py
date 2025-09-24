@@ -39,6 +39,7 @@ from open_webui.config import (
     WEBHOOK_URL,
     JWT_EXPIRES_IN,
     GLOBUS_INFERENCE_SERVICE_SCOPE,
+    GATEWAY_API_WHOAMI_URL,
     AppConfig,
 )
 from open_webui.constants import ERROR_MESSAGES, WEBHOOK_MESSAGES
@@ -52,7 +53,7 @@ from open_webui.env import (
 from open_webui.utils.misc import parse_duration
 from open_webui.utils.auth import get_password_hash, create_token
 from open_webui.utils.webhook import post_webhook
-from open_webui.utils.globus_auth import validate_access_token
+from open_webui.utils.inference_auth_check import validate_user_access_token
 
 from open_webui.env import SRC_LOG_LEVELS, GLOBAL_LOG_LEVEL
 
@@ -419,13 +420,13 @@ class OAuthManager:
             log.warning(f"OAuth callback failed, user data is missing: {token}")
             raise HTTPException(400, detail=ERROR_MESSAGES.INVALID_CRED)
         
-        # [ADDITION] 
-        # [IMPORTANT] user authorization layer
-        # Introspect the user's access token and refuse access if needed
-        atv_response = validate_access_token(user_access_token)
-        if not atv_response.is_valid:
-            log.info(f"User access token is not valid: {atv_response.error_message}")
-            unauthorized_url = urljoin(str(request.app.state.config.WEBUI_URL), f'unauthorized?error={quote(atv_response.error_message)}')
+        # [ADDITION]
+        # [IMPORTANT] - Authorization layer
+        # Make a request to the Inference Gateway API to see if user is authorized, and deny access if necessary
+        is_authorized, whoami_data, error_message = await validate_user_access_token(user_access_token)
+        if not is_authorized:
+            log.error(f"Unauthorized: {error_message}")
+            unauthorized_url = urljoin(str(request.app.state.config.WEBUI_URL), f'unauthorized?error={quote(error_message)}')
             return RedirectResponse(url=unauthorized_url, headers=response.headers)
 
         sub = user_data.get(OAUTH_PROVIDERS[provider].get("sub_claim", "sub"))
