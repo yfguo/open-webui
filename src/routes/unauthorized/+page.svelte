@@ -5,6 +5,9 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 
+	// [ADDITION]
+	let errorMessage = '';
+
 	import { getBackendConfig } from '$lib/apis';
 	import { userSignOut } from '$lib/apis/auths';
 
@@ -44,6 +47,12 @@
 	}
 
 	onMount(async () => {
+		
+		// [ADDITION]
+		// Extract error message from URL parameters
+		const urlParams = new URLSearchParams(window.location.search);
+		errorMessage = urlParams.get('error') || '';
+		
 		loaded = true
 		return null
 	});
@@ -88,8 +97,17 @@
 						<!-- {$i18n.t('Contact Admin for WebUI Access')} -->
 					</div>
 
+					<!-- [ADDITION] -->
+					{#if errorMessage}
+						<div class="mt-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-center">
+							<div class="text-sm text-red-700 dark:text-red-300 break-words">
+								{errorMessage}
+							</div>
+						</div>
+					{/if}
+
 					<div class="mt-4 text-center text-sm text-gray-700 dark:text-gray-200 w-full">
-						<span>{$i18n.t('Your account is not authorized to access this service.')}{'\n'}{$i18n.t('If you used Globus to sign in, please')}</span>
+						<span>{$i18n.t('If you used Globus to sign in, please')}</span>
 						<a href="https://auth.globus.org/v2/web/logout" target="_blank" rel="noopener" class="underline text-blue-600 dark:text-blue-400 mx-1">
 							{$i18n.t('sign out from Globus')}
 						</a>
