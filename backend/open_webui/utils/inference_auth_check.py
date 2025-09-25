@@ -1,6 +1,21 @@
 import aiohttp
-from open_webui.config import GATEWAY_API_WHOAMI_URL
+import logging
+from open_webui.config import GATEWAY_API_WHOAMI_URL, AUTHORIZED_IDP_DOMAINS, AUTHORIZED_GROUPS_PER_IDP
 from open_webui.env import AIOHTTP_CLIENT_SESSION_SSL
+from pydantic import BaseModel
+from typing import List
+
+# Set up logger for this module
+log = logging.getLogger(__name__)
+
+class UserPydantic(BaseModel):
+    id: str
+    name: str
+    username: str
+    user_group_uuids: List[str]
+    idp_id: str
+    idp_name: str
+    auth_service: str
 
 async def validate_user_access_token(user_access_token):
     """
@@ -21,11 +36,35 @@ async def validate_user_access_token(user_access_token):
 
                 # If the request succeeded (meaning the user is authorized), return the whoami data
                 if whoami_response.status == 200:
-                    return True, whoami_data, None
+
+                    # Validate the response against UserPydantic model
+                    try:
+                        user = UserPydantic(**whoami_data)
+                    except Exception as validation_error:
+                        log.error(f"User data validation failed: {validation_error}")
+                        log.error(f"Raw response data that failed validation: {whoami_data}")
+                        error_message = f"User data validation failed. Please contact support."
+                        return False, None, error_message
+
+                    # Make sure the user used an authorized IDP
+                    user_idp_domain = user.username.split("@")[-1]
+                    if user_idp_domain not in AUTHORIZED_IDP_DOMAINS.value:
+                        error_message = f"Error: Permission denied. Must authenticate with {AUTHORIZED_IDP_DOMAINS.value}. Currently authenticated as {user.username}."
+                        return False, None, error_message
+
+                    # Make sure the user is part of an authorized group (if applicable for the IDP)
+                    if user_idp_domain in AUTHORIZED_GROUPS_PER_IDP.value:
+                        group_overlap = set(user.user_group_uuids) & set(AUTHORIZED_GROUPS_PER_IDP.value[user_idp_domain])
+                        if len(group_overlap) == 0:
+                            error_message = f"Error: Permission denied. User ({user.name} - {user.username}) not part of the Globus Groups applied for {user.idp_name}."
+                            return False, None, error_message
+
+                    # If user passed all authorization checks, grant acces and return the user data
+                    return True, user, None
 
                 # If the request failed (likely due to unauthorized access) ...
                 else:
-                    
+
                     # Try to extract just the error message from the 'detail' field
                     try:
                         if isinstance(whoami_data, dict) and 'detail' in whoami_data:
