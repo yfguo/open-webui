@@ -374,6 +374,26 @@ GATEWAY_API_WHOAMI_URL = PersistentConfig(
     os.environ.get("GATEWAY_API_WHOAMI_URL", "< not set >"),
 )
 
+# List of authorized IDP domains for user validation
+_authorized_idp_domains_raw = [domain.strip() for domain in os.environ.get("AUTHORIZED_IDP_DOMAINS", "").split('\n') if domain.strip()]
+if not _authorized_idp_domains_raw:
+    raise ValueError("AUTHORIZED_IDP_DOMAINS environment variable must be set and contain at least one domain")
+AUTHORIZED_IDP_DOMAINS = PersistentConfig(
+    "AUTHORIZED_IDP_DOMAINS",
+    "oauth.globus.authorized_idp_domains",
+    _authorized_idp_domains_raw,
+)
+
+# Dictionary mapping IDP domains to authorized groups
+_authorized_groups_per_idp_raw = json.loads(os.getenv("AUTHORIZED_GROUPS_PER_IDP", "{}"))
+for key, value in _authorized_groups_per_idp_raw.items():
+    _authorized_groups_per_idp_raw[key] = [v.strip() for v in value.split(",")]
+AUTHORIZED_GROUPS_PER_IDP = PersistentConfig(
+    "AUTHORIZED_GROUPS_PER_IDP",
+    "oauth.globus.authorized_groups_per_idp",
+    _authorized_groups_per_idp_raw,
+)
+
 MICROSOFT_CLIENT_ID = PersistentConfig(
     "MICROSOFT_CLIENT_ID",
     "oauth.microsoft.client_id",
