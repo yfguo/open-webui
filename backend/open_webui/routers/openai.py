@@ -1017,11 +1017,8 @@ async def generate_chat_completion(
             try:
                 response = await r.json()
             except Exception as e:
-                # log.error(e)
-                response = await r.text()
-                response = json.loads(response)
-            log.debug(f"response: {r}")
-            r.raise_for_status()
+                log.debug(f"response: {r}")
+                r.raise_for_status()
             return response
     except Exception as e:
         log.exception(e)
