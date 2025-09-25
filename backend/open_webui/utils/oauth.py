@@ -398,20 +398,29 @@ class OAuthManager:
         except Exception as e:
             log.warning(f"OAuth callback error: {e}")
             raise HTTPException(400, detail=ERROR_MESSAGES.INVALID_CRED)
-        
+
         # [Addition]
         # Try to extract the access token issued by the WebUI Globus confidential client
         # You need to select the access token tied to the inference service's scope
         # Otherwise the Inference API confidential client won't have the permission to introspect the token
-        log.debug(f"token {token}")
         user_access_token = None
-        try:
-            user_other_tokens = token["other_tokens"]
-            for other_token in user_other_tokens:
-                if other_token["scope"] == GLOBUS_INFERENCE_SERVICE_SCOPE.value:
-                    user_access_token = other_token["access_token"]
-        except:
-            user_access_token = None
+        if provider == "globus":
+            log.debug(f"token {token}")
+            try:
+                user_other_tokens = token["other_tokens"]
+                for other_token in user_other_tokens:
+                    if other_token["scope"] == GLOBUS_INFERENCE_SERVICE_SCOPE.value:
+                        user_access_token = other_token["access_token"]
+            except:
+                user_access_token = None
+            # [ADDITION]
+            # [IMPORTANT] - Authorization layer
+            # Make a request to the Inference Gateway API to see if user is authorized, and deny access if necessary
+            is_authorized, whoami_data, error_message = await validate_user_access_token(user_access_token)
+            if not is_authorized:
+                log.error(f"Unauthorized: {error_message}")
+                unauthorized_url = urljoin(str(request.app.state.config.WEBUI_URL), f'unauthorized?error={quote(error_message)}')
+                return RedirectResponse(url=unauthorized_url, headers=response.headers)
 
         user_data: UserInfo = token.get("userinfo")
         if not user_data or auth_manager_config.OAUTH_EMAIL_CLAIM not in user_data:
@@ -419,15 +428,6 @@ class OAuthManager:
         if not user_data:
             log.warning(f"OAuth callback failed, user data is missing: {token}")
             raise HTTPException(400, detail=ERROR_MESSAGES.INVALID_CRED)
-        
-        # [ADDITION]
-        # [IMPORTANT] - Authorization layer
-        # Make a request to the Inference Gateway API to see if user is authorized, and deny access if necessary
-        is_authorized, whoami_data, error_message = await validate_user_access_token(user_access_token)
-        if not is_authorized:
-            log.error(f"Unauthorized: {error_message}")
-            unauthorized_url = urljoin(str(request.app.state.config.WEBUI_URL), f'unauthorized?error={quote(error_message)}')
-            return RedirectResponse(url=unauthorized_url, headers=response.headers)
 
         sub = user_data.get(OAUTH_PROVIDERS[provider].get("sub_claim", "sub"))
         if not sub:
@@ -505,7 +505,7 @@ class OAuthManager:
 
             # [Addition]
             # Update the API key (new access token from the latest authentication)
-            if user_access_token:
+            if provider == "globus" and user_access_token:
                 Users.update_user_api_key_by_id(user.id, user_access_token)
 
             # Update profile picture if enabled and different from current
@@ -555,7 +555,7 @@ class OAuthManager:
                 role = self.get_user_role(None, user_data)
 
                 # [Edit] - add the access token as the API key is available
-                if user_access_token:
+                if provider == "globus" and user_access_token:
                     user = Auths.insert_new_auth(
                         email=email,
                         password=get_password_hash(
