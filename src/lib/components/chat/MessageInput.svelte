@@ -107,6 +107,13 @@
 	let inputVariables = {};
 	let inputVariableValues = {};
 
+	let currentMessage = null;
+	let showStopButton = false;
+	$: currentMessage = history?.messages?.[history?.currentId ?? ''] ?? null;
+	$: showStopButton =
+		(Array.isArray(taskIds) && taskIds.length > 0) ||
+		(currentMessage?.role === 'assistant' && currentMessage?.done !== true);
+
 	$: onChange({
 		prompt,
 		files: files
@@ -1819,7 +1826,7 @@
 											</Tooltip>
 										{/if}
 
-										{#if (taskIds && taskIds.length > 0) || (history.currentId && history.messages[history.currentId]?.done != true)}
+										{#if showStopButton}
 											<div class=" flex items-center">
 												<Tooltip content={$i18n.t('Stop')}>
 													<button
