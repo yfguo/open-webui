@@ -150,6 +150,9 @@
 
 	let messageIndexEdit = false;
 
+	let hideMessage = false;
+	$: hideMessage = message?.hidden ?? false;
+
 	let audioParts: Record<number, HTMLAudioElement | null> = {};
 	let speaking = false;
 	let speakingIdx: number | undefined;
@@ -192,6 +195,30 @@
 				res();
 			};
 		});
+	};
+
+	const clearResponseError = () => {
+		const target = history?.messages?.[message.id];
+		if (!target) {
+			return;
+		}
+
+		const updatedMessage = {
+			...target,
+			done: true,
+			content: '',
+			hidden: true
+		};
+		delete updatedMessage.error;
+
+		history.messages = {
+			...history.messages,
+			[message.id]: updatedMessage
+		};
+		message = JSON.parse(JSON.stringify(updatedMessage));
+		history.currentId = message.id;
+
+		updateChat?.();
 	};
 
 	const toggleSpeakMessage = async () => {
@@ -599,7 +626,7 @@
 
 {#key message.id}
 	<div
-		class=" flex w-full message-{message.id}"
+		class={`flex w-full message-${message.id} ${hideMessage ? 'hidden' : ''}`}
 		id="message-{message.id}"
 		dir={$settings.chatDirection}
 	>
@@ -853,7 +880,7 @@
 								{/if}
 
 								{#if message?.error}
-									<Error content={message?.error?.content ?? message.content} />
+									<Error content={message?.error?.content ?? message.content} on:clear={clearResponseError} />
 								{/if}
 
 								{#if (message?.sources || message?.citations) && (model?.info?.meta?.capabilities?.citations ?? true)}
