@@ -25,6 +25,9 @@ async def validate_user_access_token(user_access_token):
     """
     
     # Prepare URL and Headers to contact the Inference Gateway API
+    if len(GATEWAY_API_WHOAMI_URL.value) <= 0:
+        return True, None, ""
+
     url = GATEWAY_API_WHOAMI_URL.value
     headers = {"Authorization": f"Bearer {user_access_token}", "Content-Type": "application/json"}
 

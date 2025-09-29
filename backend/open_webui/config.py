@@ -371,7 +371,7 @@ GLOBUS_INFERENCE_SERVICE_SCOPE = PersistentConfig(
 GATEWAY_API_WHOAMI_URL = PersistentConfig(
     "GATEWAY_API_WHOAMI_URL",
     "oauth.globus.gateway_api_whoami_url",
-    os.environ.get("GATEWAY_API_WHOAMI_URL", "< not set >"),
+    os.environ.get("GATEWAY_API_WHOAMI_URL", ""),
 )
 
 # List of authorized IDP domains for user validation
