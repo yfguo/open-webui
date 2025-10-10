@@ -91,6 +91,26 @@
 		}
 	);
 
+	const updateFuse = () => {
+		if (fuse) {
+			fuse.setCollection(
+				items.map((item) => {
+					const _item = {
+						...item,
+						modelName: item.model?.name,
+						tags: (item.model?.tags ?? []).map((tag) => tag.name).join(' '),
+						desc: item.model?.info?.meta?.description
+					};
+					return _item;
+				})
+			);
+		}
+	};
+
+	$: if (items) {
+		updateFuse();
+	}
+
 	$: filteredItems = (
 		searchValue
 			? fuse
@@ -537,48 +557,18 @@
 
 							<!-- {#if items.find((item) => item.model?.connection_type === 'local')} -->
 							<!-- 	<button -->
-							<!-- 		class="min-w-fit outline-none p-1.5 {selectedConnectionType === 'local' -->
+							<!-- 		class="min-w-fit outline-none px-1.5 py-0.5 {selectedConnectionType === 'local' -->
 							<!-- 			? '' -->
 							<!-- 			: 'text-gray-300 dark:text-gray-600 hover:text-gray-700 dark:hover:text-white'} transition capitalize" -->
+							<!-- 		aria-pressed={selectedConnectionType === 'local'} -->
 							<!-- 		on:click={() => { -->
 							<!-- 			selectedTag = ''; -->
 							<!-- 			selectedConnectionType = 'local'; -->
-							<!-- 			selectedStatus = ''; -->
 							<!-- 		}} -->
 							<!-- 	> -->
 							<!-- 		{$i18n.t('Local')} -->
 							<!-- 	</button> -->
 							<!-- {/if} -->
-||||||| b8da4a8cd825
-							{#if items.find((item) => item.model?.connection_type === 'local')}
-								<button
-									class="min-w-fit outline-none p-1.5 {selectedConnectionType === 'local'
-										? ''
-										: 'text-gray-300 dark:text-gray-600 hover:text-gray-700 dark:hover:text-white'} transition capitalize"
-									on:click={() => {
-										selectedTag = '';
-										selectedConnectionType = 'local';
-									}}
-								>
-									{$i18n.t('Local')}
-								</button>
-							{/if}
-=======
-							{#if items.find((item) => item.model?.connection_type === 'local')}
-								<button
-									class="min-w-fit outline-none px-1.5 py-0.5 {selectedConnectionType === 'local'
-										? ''
-										: 'text-gray-300 dark:text-gray-600 hover:text-gray-700 dark:hover:text-white'} transition capitalize"
-									aria-pressed={selectedConnectionType === 'local'}
-									on:click={() => {
-										selectedTag = '';
-										selectedConnectionType = 'local';
-									}}
-								>
-									{$i18n.t('Local')}
-								</button>
-							{/if}
->>>>>>> v0.6.32
 
 							{#if items.find((item) => item.model?.connection_type === 'external')}
 								<button

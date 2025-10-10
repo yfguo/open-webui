@@ -576,11 +576,11 @@
 
 		user.subscribe((value) => {
 			if (value) {
-				$socket?.off('chat-events', chatEventHandler);
-				$socket?.off('channel-events', channelEventHandler);
+				$socket?.off('events', chatEventHandler);
+				$socket?.off('events:channel', channelEventHandler);
 
-				$socket?.on('chat-events', chatEventHandler);
-				$socket?.on('channel-events', channelEventHandler);
+				$socket?.on('events', chatEventHandler);
+				$socket?.on('events:channel', channelEventHandler);
 
 				// Set up the token expiry check
 				if (tokenTimer) {
@@ -597,8 +597,8 @@
 				// Set i18n context for auto-logout messages
 				autoLogoutManager.setI18n(i18n);
 			} else {
-				$socket?.off('chat-events', chatEventHandler);
-				$socket?.off('channel-events', channelEventHandler);
+				$socket?.off('events', chatEventHandler);
+				$socket?.off('events:channel', channelEventHandler);
 
 				// Stop auto-logout functionality when user logs out
 				stopAutoLogout();

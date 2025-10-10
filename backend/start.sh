@@ -70,15 +70,25 @@ if [ -n "$SPACE_ID" ]; then
 fi
 
 PYTHON_CMD=$(command -v python3 || command -v python)
+UVICORN_WORKERS="${UVICORN_WORKERS:-1}"
+
+# If script is called with arguments, use them; otherwise use default workers
+if [ "$#" -gt 0 ]; then
+    ARGS=("$@")
+else
+    ARGS=(--workers "$UVICORN_WORKERS")
+fi
 
 if [ -f $SSL_CERTFILE ]; then
     if [ -f $SSL_KEYFILE ]; then
-        LAUNCH_HTTPS=yes
+        SSL_ARGS='--ssl-keyfile "$SSL_KEYFILE" --ssl-certfile "$SSL_CERTFILE"'
     fi
 fi
 
-if test X"$LAUNCH_HTTPS" = "Xyes"; then
-    WEBUI_SECRET_KEY="$WEBUI_SECRET_KEY" exec "$PYTHON_CMD" -m uvicorn open_webui.main:app --host "$HOST" --port "$PORT" --forwarded-allow-ips '*' --workers "${UVICORN_WORKERS:-1}" --ssl-keyfile "$SSL_KEYFILE" --ssl-certfile "$SSL_CERTFILE"
-else
-    WEBUI_SECRET_KEY="$WEBUI_SECRET_KEY" exec "$PYTHON_CMD" -m uvicorn open_webui.main:app --host "$HOST" --port "$PORT" --forwarded-allow-ips '*' --workers "${UVICORN_WORKERS:-1}"
-fi
+# Run uvicorn
+WEBUI_SECRET_KEY="$WEBUI_SECRET_KEY" exec "$PYTHON_CMD" -m uvicorn open_webui.main:app \
+    --host "$HOST" \
+    --port "$PORT" \
+    $SSL_ARGS \
+    --forwarded-allow-ips '*' \
+    "${ARGS[@]}"
