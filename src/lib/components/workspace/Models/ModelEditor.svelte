@@ -1,9 +1,15 @@
 <script lang="ts">
+	import { toast } from 'svelte-sonner';
+
 	import { onMount, getContext, tick } from 'svelte';
 	import { models, tools, functions, knowledge as knowledgeCollections, user } from '$lib/stores';
 	import { WEBUI_BASE_URL } from '$lib/constants';
 
-	//import AdvancedParams from '$lib/components/chat/Settings/Advanced/AdvancedParams.svelte';
+	import { getTools } from '$lib/apis/tools';
+	import { getFunctions } from '$lib/apis/functions';
+	import { getKnowledgeBases } from '$lib/apis/knowledge';
+
+	// import AdvancedParams from '$lib/components/chat/Settings/Advanced/AdvancedParams.svelte';
 	import AdvancedParams from '$lib/components/chat/Settings/Advanced/AdvancedParamsInferenceService.svelte';
 	import Tags from '$lib/components/common/Tags.svelte';
 	import Knowledge from '$lib/components/workspace/Models/Knowledge.svelte';
@@ -12,15 +18,11 @@
 	import ActionsSelector from '$lib/components/workspace/Models/ActionsSelector.svelte';
 	import Capabilities from '$lib/components/workspace/Models/Capabilities.svelte';
 	import Textarea from '$lib/components/common/Textarea.svelte';
-	import { getTools } from '$lib/apis/tools';
-	import { getFunctions } from '$lib/apis/functions';
-	import { getKnowledgeBases } from '$lib/apis/knowledge';
 	import AccessControl from '../common/AccessControl.svelte';
-	import { stringify } from 'postcss';
-	import { toast } from 'svelte-sonner';
 	import Spinner from '$lib/components/common/Spinner.svelte';
 	import XMark from '$lib/components/icons/XMark.svelte';
-	import { getNoteList } from '$lib/apis/notes';
+	import DefaultFiltersSelector from './DefaultFiltersSelector.svelte';
+	import DefaultFeatures from './DefaultFeatures.svelte';
 
 	const i18n = getContext('i18n');
 
@@ -80,6 +82,13 @@
 	let params = {
 		system: ''
 	};
+
+	let knowledge = [];
+	let toolIds = [];
+
+	let filterIds = [];
+	let defaultFilterIds = [];
+
 	let capabilities = {
 		vision: true,
 		file_upload: true,
@@ -87,14 +96,12 @@
 		image_generation: true,
 		code_interpreter: true,
 		citations: true,
+		status_updates: true,
 		usage: undefined
 	};
+	let defaultFeatureIds = [];
 
-	let knowledge = [];
-	let toolIds = [];
-	let filterIds = [];
 	let actionIds = [];
-
 	let accessControl = {};
 
 	const addUsage = (base_model_id) => {
@@ -117,11 +124,24 @@
 		info.name = name;
 
 		if (id === '') {
-			toast.error('Model ID is required.');
+			toast.error($i18n.t('Model ID is required.'));
+			loading = false;
+
+			return;
 		}
 
 		if (name === '') {
-			toast.error('Model Name is required.');
+			toast.error($i18n.t('Model Name is required.'));
+			loading = false;
+
+			return;
+		}
+
+		if (knowledge.some((item) => item.status === 'uploading')) {
+			toast.error($i18n.t('Please wait until all files are uploaded.'));
+			loading = false;
+
+			return;
 		}
 
 		info.params = { ...info.params, ...params };
@@ -159,11 +179,27 @@
 			}
 		}
 
+		if (defaultFilterIds.length > 0) {
+			info.meta.defaultFilterIds = defaultFilterIds;
+		} else {
+			if (info.meta.defaultFilterIds) {
+				delete info.meta.defaultFilterIds;
+			}
+		}
+
 		if (actionIds.length > 0) {
 			info.meta.actionIds = actionIds;
 		} else {
 			if (info.meta.actionIds) {
 				delete info.meta.actionIds;
+			}
+		}
+
+		if (defaultFeatureIds.length > 0) {
+			info.meta.defaultFeatureIds = defaultFeatureIds;
+		} else {
+			if (info.meta.defaultFeatureIds) {
+				delete info.meta.defaultFeatureIds;
 			}
 		}
 
@@ -223,9 +259,6 @@
 					)
 				: null;
 
-			toolIds = model?.meta?.toolIds ?? [];
-			filterIds = model?.meta?.filterIds ?? [];
-			actionIds = model?.meta?.actionIds ?? [];
 			knowledge = (model?.meta?.knowledge ?? []).map((item) => {
 				if (item?.collection_name && item?.type !== 'file') {
 					return {
@@ -244,7 +277,14 @@
 					return item;
 				}
 			});
+
+			toolIds = model?.meta?.toolIds ?? [];
+			filterIds = model?.meta?.filterIds ?? [];
+			defaultFilterIds = model?.meta?.defaultFilterIds ?? [];
+			actionIds = model?.meta?.actionIds ?? [];
+
 			capabilities = { ...capabilities, ...(model?.meta?.capabilities ?? {}) };
+			defaultFeatureIds = model?.meta?.defaultFeatureIds ?? [];
 
 			if ('access_control' in model) {
 				accessControl = model.access_control;
@@ -298,7 +338,7 @@
 					/>
 				</svg>
 			</div>
-			<div class=" self-center text-sm font-medium">{'Back'}</div>
+			<div class=" self-center text-sm font-medium">{$i18n.t('Back')}</div>
 		</button>
 	{/if}
 
@@ -438,7 +478,7 @@
 								}}
 								type="button"
 							>
-								Reset Image</button
+								{$i18n.t('Reset Image')}</button
 							>
 						</div>
 					</div>
@@ -477,7 +517,7 @@
 							<div>
 								<select
 									class="text-sm w-full bg-transparent outline-hidden"
-									placeholder="Select a base model (e.g. llama3, gpt-4o)"
+									placeholder={$i18n.t('Select a base model (e.g. llama3, gpt-4o)')}
 									bind:value={info.base_model_id}
 									on:change={(e) => {
 										addUsage(e.target.value);
@@ -487,7 +527,7 @@
 									<option value={null} class=" text-gray-900"
 										>{$i18n.t('Select a base model')}</option
 									>
-									{#each $models.filter((m) => (model ? m.id !== model.id : true) && !m?.preset && m?.owned_by !== 'arena') as model}
+									{#each $models.filter((m) => (model ? m.id !== model.id : true) && !m?.preset && m?.owned_by !== 'arena' && !(m?.direct ?? false)) as model}
 										<option value={model.id} class=" text-gray-900">{model.name}</option>
 									{/each}
 								</select>
@@ -548,7 +588,7 @@
 					</div>
 
 					<div class="my-2">
-						<div class="px-3 py-2 bg-gray-50 dark:bg-gray-950 rounded-lg">
+						<div class="px-4 py-3 bg-gray-50 dark:bg-gray-950 rounded-3xl">
 							<AccessControl
 								bind:accessControl
 								accessRoles={['read', 'write']}
@@ -570,7 +610,9 @@
 								<div>
 									<Textarea
 										className=" text-sm w-full bg-transparent outline-hidden resize-none overflow-y-hidden "
-										placeholder={`Write your model system prompt content here\ne.g.) You are Mario from Super Mario Bros, acting as an assistant.`}
+										placeholder={$i18n.t(
+											'Write your model system prompt content here\ne.g.) You are Mario from Super Mario Bros, acting as an assistant.'
+										)}
 										rows={4}
 										bind:value={system}
 									/>
@@ -687,7 +729,7 @@
 										</div>
 									{/each}
 								{:else}
-									<div class="text-xs text-center">No suggestion prompts</div>
+									<div class="text-xs text-center">{$i18n.t('No suggestion prompts')}</div>
 								{/if}
 							</div>
 						{/if}
@@ -710,6 +752,24 @@
 						/>
 					</div>
 
+					{#if filterIds.length > 0}
+						{@const toggleableFilters = $functions.filter(
+							(func) =>
+								func.type === 'filter' &&
+								(filterIds.includes(func.id) || func?.is_global) &&
+								func?.meta?.toggle
+						)}
+
+						{#if toggleableFilters.length > 0}
+							<div class="my-2">
+								<DefaultFiltersSelector
+									bind:selectedFilterIds={defaultFilterIds}
+									filters={toggleableFilters}
+								/>
+							</div>
+						{/if}
+					{/if}
+
 					<div class="my-2">
 						<ActionsSelector
 							bind:selectedActionIds={actionIds}
@@ -720,6 +780,21 @@
 					<div class="my-2">
 						<Capabilities bind:capabilities />
 					</div>
+
+					{#if Object.keys(capabilities).filter((key) => capabilities[key]).length > 0}
+						{@const availableFeatures = Object.entries(capabilities)
+							.filter(
+								([key, value]) =>
+									value && ['web_search', 'code_interpreter', 'image_generation'].includes(key)
+							)
+							.map(([key, value]) => key)}
+
+						{#if availableFeatures.length > 0}
+							<div class="my-2">
+								<DefaultFeatures {availableFeatures} bind:featureIds={defaultFeatureIds} />
+							</div>
+						{/if}
+					{/if}
 
 					<div class="my-2 text-gray-300 dark:text-gray-700">
 						<div class="flex w-full justify-between mb-2">

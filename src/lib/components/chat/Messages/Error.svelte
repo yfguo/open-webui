@@ -20,8 +20,24 @@
 		<Info className="size-5 text-red-700 dark:text-red-400" />
 	</div>
 
-	<div class="flex flex-col gap-2 text-sm text-left">
-		<div>{typeof content === 'string' ? content : JSON.stringify(content)}</div>
+	<div class=" self-center text-sm">
+		<div>
+			{#if typeof content === 'string'}
+				{content}
+			{:else if typeof content === 'object' && content !== null}
+				{#if content?.error && content?.error?.message}
+					{content.error.message}
+				{:else if content?.detail}
+					{content.detail}
+				{:else if content?.message}
+					{content.message}
+				{:else}
+					{JSON.stringify(content)}
+				{/if}
+			{:else}
+				{JSON.stringify(content)}
+			{/if}
+		</div>
 		<button
 			type="button"
 			class="self-start rounded-md border border-red-500/40 bg-transparent px-3 py-1 text-xs font-medium text-red-700 transition hover:bg-red-500/10 dark:text-red-300"
