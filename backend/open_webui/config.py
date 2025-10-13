@@ -687,8 +687,8 @@ def load_oauth_providers():
 
     if GLOBUS_CLIENT_ID.value and GLOBUS_CLIENT_SECRET.value:
 
-        def globus_oauth_register(client):
-            client.register(
+        def globus_oauth_register(oauth: OAuth):
+            client = oauth.register(
                 name="globus",
                 client_id=GLOBUS_CLIENT_ID.value,
                 client_secret=GLOBUS_CLIENT_SECRET.value,
@@ -696,6 +696,7 @@ def load_oauth_providers():
                 client_kwargs={"scope": GLOBUS_OAUTH_SCOPE.value},
                 redirect_uri=GLOBUS_REDIRECT_URI.value,
             )
+            return client
 
         OAUTH_PROVIDERS["globus"] = {
             "redirect_uri": GLOBUS_REDIRECT_URI.value,
@@ -846,6 +847,8 @@ def load_oauth_providers():
         configured_providers.append("GitHub")
     if FEISHU_CLIENT_ID.value:
         configured_providers.append("Feishu")
+    if GLOBUS_CLIENT_ID.value:
+        configured_providers.append("Globus")
 
     if configured_providers and not OPENID_PROVIDER_URL.value:
         provider_list = ", ".join(configured_providers)
