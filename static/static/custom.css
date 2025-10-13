@@ -20,16 +20,8 @@
   z-index: 1000;
 }
 
-.h-main-content-area {
+.h-screen {
   height: calc(100vh - var(--banner-height));
-}
-
-.min-h-main-content-area {
-  min-height: calc(100vh - var(--banner-height));
-}
-
-.max-h-main-content-area {
-  max-height: calc(100dvh - var(--banner-height));
 }
 
 .banner-left {
