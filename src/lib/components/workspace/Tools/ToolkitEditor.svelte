@@ -196,7 +196,7 @@ class Tools:
 	<div class="mx-auto w-full md:px-0 h-full">
 		<form
 			bind:this={formElement}
-			class=" flex flex-col max-h-main-content-area h-full"
+			class=" flex flex-col max-h-[100dvh] h-full"
 			on:submit|preventDefault={() => {
 				if (edit) {
 					submitHandler();

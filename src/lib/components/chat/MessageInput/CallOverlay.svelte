@@ -690,7 +690,7 @@
 </script>
 
 {#if $showCallOverlay}
-	<div class="max-w-lg w-full h-full max-h-main-content-area flex flex-col justify-between p-3 md:p-6">
+	<div class="max-w-lg w-full h-full max-h-[100dvh] flex flex-col justify-between p-3 md:p-6">
 		{#if camera}
 			<button
 				type="button"

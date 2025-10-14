@@ -508,7 +508,7 @@
 	<div
 		class=" {$isApp
 			? ' ml-[4.5rem] md:ml-0'
-			: ''} fixed md:hidden z-40 top-0 right-0 left-0 bottom-0 bg-black/60 w-full min-h-main-content-area h-main-content-area flex justify-center overflow-hidden overscroll-contain"
+			: ''} fixed md:hidden z-40 top-0 right-0 left-0 bottom-0 bg-black/60 w-full min-h-screen h-screen flex justify-center overflow-hidden overscroll-contain"
 		on:mousedown={() => {
 			showSidebar.set(!$showSidebar);
 		}}
@@ -711,7 +711,7 @@
 	<div
 		bind:this={navElement}
 		id="sidebar"
-		class="h-main-content-area max-h-main-content-area min-h-main-content-area select-none {$showSidebar
+		class="h-screen max-h-[100dvh] min-h-screen select-none {$showSidebar
 			? 'bg-gray-50 dark:bg-gray-950 z-50'
 			: ' bg-transparent z-0 '} {$isApp
 			? `ml-[4.5rem] md:ml-0 `
@@ -721,7 +721,7 @@
 		data-state={$showSidebar}
 	>
 		<div
-			class=" my-auto flex flex-col justify-between h-main-content-area max-h-main-content-area w-[260px] overflow-x-hidden scrollbar-hidden z-50 {$showSidebar
+			class=" my-auto flex flex-col justify-between h-screen max-h-[100dvh] w-[260px] overflow-x-hidden scrollbar-hidden z-50 {$showSidebar
 				? ''
 				: 'invisible'}"
 		>

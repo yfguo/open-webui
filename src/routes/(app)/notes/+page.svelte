@@ -11,7 +11,7 @@
 </script>
 
 <div
-	class=" flex flex-col w-full h-main-content-area max-h-main-content-area transition-width duration-200 ease-in-out {$showSidebar
+	class=" flex flex-col w-full h-screen max-h-[100dvh] transition-width duration-200 ease-in-out {$showSidebar
 		? 'md:max-w-[calc(100%-260px)]'
 		: ''} max-w-full"
 >

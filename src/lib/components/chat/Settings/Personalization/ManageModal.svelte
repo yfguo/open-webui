@@ -75,7 +75,7 @@
 
 		<div class="flex flex-col w-full px-5 pb-5 dark:text-gray-200">
 			<div
-				class=" flex flex-col w-full sm:flex-row sm:justify-center sm:space-x-6 h-[28rem] max-h-main-content-area rounded-xl mb-4 mt-1"
+				class=" flex flex-col w-full sm:flex-row sm:justify-center sm:space-x-6 h-[28rem] max-h-screen rounded-xl mb-4 mt-1"
 			>
 				{#if memories.length > 0}
 					<div class="text-left text-sm w-full mb-4 overflow-y-scroll">
