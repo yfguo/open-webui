@@ -135,27 +135,30 @@ def openai_reasoning_model_handler(payload):
 class AGPTModelStatus:
     def __init__(self, ttl=0):
         self.session = None
-        self.live_models = []
-        self.starting_models = []
-        self.queued_models = []
-        self.last_update = 0
+        self.live_models = {}
+        self.starting_models = {}
+        self.queued_models = {}
+        self.last_update = {}
         self.ttl = ttl
-        self._task = None
+        self._task = {}
 
-    async def fetch(self, url, key=None, user: UserModel = None, timeout=None):
+    async def fetch(self, cluster: str, url, key=None, user: UserModel = None, timeout=None):
+        _cluster = cluster.lower()
         if self.session is None:
             self.session = aiohttp.ClientSession(
                 trust_env=True,
                 timeout=aiohttp.ClientTimeout(total=AIOHTTP_CLIENT_TIMEOUT_MODEL_LIST)
             )
 
-        if time.time() - self.last_update <= self.ttl:
-            log.debug(f"skip jobs query due to TTL")
-            return True
+        if _cluster in self.last_update:
+            if time.time() - self.last_update[_cluster] <= self.ttl:
+                log.debug(f"skip jobs query due to TTL")
+                return True
 
-        if self._task != None and not self._task.done():
-            log.debug(f"query pending")
-            return True
+        if _cluster in self._task:
+            if not self._task[_cluster].done():
+                log.debug(f"query pending")
+                return True
 
         async def do_fetch(self, url, key=None):
             try:
@@ -167,25 +170,28 @@ class AGPTModelStatus:
                     ssl=AIOHTTP_CLIENT_SESSION_SSL
                 ) as response:
                     if response.ok:
-                        self.last_update = time.time()
                         status_ret = json.loads(await response.text())
                         log.debug(f"AGPTModelStatus: model_status {status_ret}")
-                        self.live_models = []
-                        self.starting_models = []
-                        self.queued_models = []
+                        live_models = []
+                        starting_models = []
+                        queued_models = []
 
                         for model in status_ret["running"]:
                             if model["Model Status"] == "running":
-                                self.live_models.extend(model["Models"].split(","))
+                                live_models.extend(model["Models"].split(","))
                             elif model["Model Status"] == "starting":
-                                self.starting_models.extend(model["Models"].split(","))
+                                starting_models.extend(model["Models"].split(","))
 
                         for model in status_ret["queued"]:
-                            self.queued_models.extend(model["Models"].split(","))
+                            queued_models.extend(model["Models"].split(","))
 
-                        log.debug(f"model_status_tracker:live_models() {self.live_models}")
-                        log.debug(f"model_status_tracker:starting_models() {self.starting_models}")
-                        log.debug(f"model_status_tracker:queue_models() {self.queued_models}")
+                        self.live_models[_cluster] = live_models
+                        self.starting_models[_cluster] = starting_models
+                        self.queued_models[_cluster] = queued_models
+                        self.last_update[_cluster] = time.time()
+                        log.debug(f"model_status_tracker:update {_cluster} live_models() {self.live_models[_cluster]}")
+                        log.debug(f"model_status_tracker:update {_cluster} starting_models() {self.starting_models[_cluster]}")
+                        log.debug(f"model_status_tracker:update {_cluster} queue_models() {self.queued_models[_cluster]}")
                         return True
                     else:
                         log.warning(f"agpt_fetch_model_status request error: {response.status} {url} key={key} user={user}")
@@ -194,22 +200,25 @@ class AGPTModelStatus:
                 log.warning(f"connection error: {e}")
                 return False
 
-        self._task = asyncio.create_task(do_fetch(self, url, key))
+        self._task[_cluster] = asyncio.create_task(do_fetch(self, url, key))
 
         try:
-            return await asyncio.wait_for(self._task, timeout=timeout)
+            return await asyncio.wait_for(self._task[_cluster], timeout=timeout)
         except asyncio.TimeoutError:
             log.debug(f"fetch returning, but still fetching {url}")
             return True
 
-    def is_live(self, model_id):
-        return model_id in self.live_models
+    def is_live(self, cluster: str, model_id):
+        _cluster = cluster.lower()
+        return model_id in self.live_models[_cluster] if _cluster in self.live_models else False
 
-    def is_starting(self, model_id):
-        return model_id in self.starting_models
+    def is_starting(self, cluster: str, model_id):
+        _cluster = cluster.lower()
+        return model_id in self.starting_models[_cluster] if _cluster in self.starting_models else False
 
-    def is_queued(self, model_id):
-        return model_id in self.queued_models
+    def is_queued(self, cluster: str, model_id):
+        _cluster = cluster.lower()
+        return model_id in self.queued_models[_cluster] if _cluster in self.queued_models else False
 
 async def get_headers_and_cookies(
     request: Request,
@@ -466,6 +475,7 @@ async def get_all_models_responses(request: Request, user: UserModel) -> list:
             request.app.state.config.OPENAI_API_KEYS += [""] * (num_urls - num_keys)
 
     request_tasks = []
+    model_status_tasks = []
     for idx, url in enumerate(request.app.state.config.OPENAI_API_BASE_URLS):
         if (str(idx) not in request.app.state.config.OPENAI_API_CONFIGS) and (
             url not in request.app.state.config.OPENAI_API_CONFIGS  # Legacy support
@@ -487,13 +497,43 @@ async def get_all_models_responses(request: Request, user: UserModel) -> list:
 
             enable = api_config.get("enable", True)
             model_ids = api_config.get("model_ids", [])
+            is_aurora = api_config.get("aurora", False)
 
             api_key = request.app.state.config.OPENAI_API_KEYS[idx]
-            if user.api_key:
-                api_key = user.api_key
 
             if enable:
-                if len(model_ids) == 0:
+                if is_aurora:
+                    if len(model_ids) > 0:
+                        log.debug(f"process {api_config}")
+                        model_list = {
+                            "object": "list",
+                            "data": [
+                                {
+                                    "id": model_id,
+                                    "name": model_id,
+                                    "owned_by": "openai",
+                                    "provider": "aurora",
+                                    "cluster_name": api_config.get("cluster_name", ""),
+                                    "openai": {"id": model_id},
+                                    "urlIdx": idx,
+                                }
+                                for model_id in model_ids
+                            ],
+                        }
+                        request_tasks.append(
+                            asyncio.ensure_future(asyncio.sleep(0, model_list))
+                        )
+                        model_status_tasks.append(model_status_tracker.fetch(
+                            api_config.get("cluster_name", ""),
+                            api_config.get("model_status_url", None),
+                            user.api_key,
+                            user=user,
+                            timeout=5
+                        ))
+                    else:
+                        request_tasks.append(asyncio.ensure_future(asyncio.sleep(0, None)))
+                        model_status_tasks.append(asyncio.ensure_future(asyncio.sleep(0, None)))
+                elif len(model_ids) == 0:
                     request_tasks.append(
                         send_get_request(
                             f"{url}/models",
@@ -523,32 +563,7 @@ async def get_all_models_responses(request: Request, user: UserModel) -> list:
                 request_tasks.append(asyncio.ensure_future(asyncio.sleep(0, None)))
 
     responses = await asyncio.gather(*request_tasks)
-
-    request_tasks = []
-
-    for idx, url in enumerate(request.app.state.config.OPENAI_API_BASE_URLS):
-        api_config = request.app.state.config.OPENAI_API_CONFIGS.get(
-            str(idx),
-            request.app.state.config.OPENAI_API_CONFIGS.get(
-                url, {}
-            ),  # Legacy support
-        )
-
-        enable = api_config.get("enable", True)
-        model_ids = api_config.get("model_ids", [])
-
-        if enable:
-            if len(model_ids) > 0:
-                request_tasks.append(model_status_tracker.fetch(
-                    f"https://data-portal-dev.cels.anl.gov/resource_server/sophia/jobs",
-                    user.api_key if user.api_key else request.app.state.config.OPENAI_API_KEYS[1],
-                    user=user,
-                    timeout=5
-                ))
-        else:
-            request_tasks.append(asyncio.ensure_future(asyncio.sleep(0, None)))
-
-    model_status = await asyncio.gather(*request_tasks)
+    await asyncio.gather(*model_status_tasks)
 
     for idx, response in enumerate(responses):
         if response:
@@ -576,14 +591,15 @@ async def get_all_models_responses(request: Request, user: UserModel) -> list:
                 if "name" in model and model["name"] is None:
                     del model["name"]
 
-                if model_status_tracker.is_live(model["id"]):
-                    model["status"] = "live"
-                elif model_status_tracker.is_starting(model["id"]):
-                    model["status"] = "starting"
-                elif model_status_tracker.is_queued(model["id"]):
-                    model["status"] = "queued"
-                else:
-                    model["status"] = "offline"
+                if "cluster_name" in model:
+                    if model_status_tracker.is_live(model["cluster_name"], model["id"]):
+                        model["status"] = "live"
+                    elif model_status_tracker.is_starting(model["cluster_name"], model["id"]):
+                        model["status"] = "starting"
+                    elif model_status_tracker.is_queued(model["cluster_name"], model["id"]):
+                        model["status"] = "queued"
+                    else:
+                        model["status"] = "offline"
 
                 if prefix_id:
                     model["id"] = (
