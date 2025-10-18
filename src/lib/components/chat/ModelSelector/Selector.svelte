@@ -130,7 +130,7 @@
 						} else if (selectedConnectionType === 'local') {
 							return item.model?.connection_type === 'local';
 						} else if (selectedConnectionType === 'external') {
-							return item.model?.connection_type === 'external';
+							return item.model?.connection_type === 'external' && item.model?.provider !== 'aurora';
 						} else if (selectedConnectionType === 'direct') {
 							return item.model?.direct;
 						}
@@ -161,7 +161,7 @@
 						} else if (selectedConnectionType === 'local') {
 							return item.model?.connection_type === 'local';
 						} else if (selectedConnectionType === 'external') {
-							return item.model?.connection_type === 'external';
+							return item.model?.connection_type === 'external' && item.model?.provider !== 'aurora';
 						} else if (selectedConnectionType === 'direct') {
 							return item.model?.direct;
 						}
@@ -418,7 +418,14 @@
 			}}
 		>
 			{#if selectedModel}
-				{selectedModel.label}
+				<div class="flex items-center gap-1.5 truncate">
+					{#if selectedModel.model?.provider === 'aurora' && selectedModel.model?.cluster_name}
+						<span class="text-[0.7rem] font-semibold px-1 rounded-md bg-gray-500/20 text-gray-700 dark:text-gray-200 uppercase flex-shrink-0">
+							{selectedModel.model.cluster_name}
+						</span>
+					{/if}
+					<span class="truncate">{selectedModel.label}</span>
+				</div>
 			{:else}
 				{placeholder}
 			{/if}
@@ -570,7 +577,7 @@
 							<!-- 	</button> -->
 							<!-- {/if} -->
 
-							{#if items.find((item) => item.model?.connection_type === 'external')}
+							{#if items.find((item) => item.model?.connection_type === 'external' && item.model?.provider !== 'aurora')}
 								<button
 									class="min-w-fit outline-none px-1.5 py-0.5 {selectedConnectionType === 'external'
 										? ''
