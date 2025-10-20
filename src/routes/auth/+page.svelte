@@ -316,7 +316,7 @@
 										>
 									{/if}
 
-									<hr class="w-16 h-px my-4 border-0 dark:bg-gray-100/10 bg-gray-700/10" />
+									<hr class="w-32 h-px my-4 border-0 dark:bg-gray-100/10 bg-gray-700/10" />
 								</div>
 								<div class="flex flex-col space-y-2">
 									{#if $config?.oauth?.providers?.google}
