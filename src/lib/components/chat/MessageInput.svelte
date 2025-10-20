@@ -1072,7 +1072,12 @@
 															? `${WEBUI_BASE_URL}/doge.png`
 															: `${WEBUI_BASE_URL}/static/favicon.png`)}
 												/>
-												<div class="translate-y-[0.5px]">
+												<div class="translate-y-[0.5px] flex items-center gap-1.5">
+													{#if atSelectedModel?.provider === 'aurora' && atSelectedModel?.cluster_name}
+														<span class="text-[0.7rem] font-semibold px-1 rounded-md bg-gray-500/20 text-gray-700 dark:text-gray-200 uppercase flex-shrink-0">
+															{atSelectedModel.cluster_name}
+														</span>
+													{/if}
 													<span class="">{atSelectedModel.name}</span>
 												</div>
 											</div>

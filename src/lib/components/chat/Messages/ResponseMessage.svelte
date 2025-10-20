@@ -647,9 +647,16 @@
 		<div class="flex-auto w-0 pl-1 relative">
 			<Name>
 				<Tooltip content={model?.name ?? message.model} placement="top-start">
-					<span class="line-clamp-1 text-black dark:text-white">
-						{model?.name ?? message.model}
-					</span>
+					<div class="line-clamp-1 text-black dark:text-white flex items-center gap-1.5">
+						{#if model?.provider === 'aurora' && model?.cluster_name}
+							<span class="text-[0.7rem] font-semibold px-1 rounded-md bg-gray-500/20 text-gray-700 dark:text-gray-200 uppercase flex-shrink-0">
+								{model.cluster_name}
+							</span>
+						{/if}
+						<span class="line-clamp-1">
+							{model?.name ?? message.model}
+						</span>
+					</div>
 				</Tooltip>
 
 				{#if message.timestamp}
