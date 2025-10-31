@@ -754,12 +754,3 @@
 	position="top-right"
 	closeButton
 />
-
-<div class="global-banner">
-  <div class="banner-left">
-    <img src="/static/alcf-logo-h.png" alt="Argonne ALCF Logo" class="banner-logo" />
-  </div>
-  <div class="banner-right">
-    Powered by <a href="https://github.com/open-webui/open-webui" target="_blank" rel="noopener noreferrer">Open WebUI</a> and <a href="https://www.globus.org/" target="_blank" rel="noopener noreferrer">Globus</a>
-  </div>
-</div>
