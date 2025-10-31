@@ -559,7 +559,7 @@
 			</div>
 
 			<div
-				class="fixed bottom-0 left-0 right-0 bg-transparent w-full flex justify-center font-primary text-black dark:text-white p-10"
+				class="fixed bottom-[var(--banner-height)] left-0 right-0 bg-transparent w-full flex justify-center font-primary text-black dark:text-white p-10"
 			>
 				<div class="flex space-x-4 items-center">
 					<img id="anl-logo" src="/static/anl-logo.png" alt="ANL" class="w-45 h-12 my-2" />
